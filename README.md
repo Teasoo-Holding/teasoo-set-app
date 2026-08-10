@@ -36,10 +36,11 @@ npm start                     # run the API
 ## Tests
 
 ```bash
-npm test              # fast unit tests (tenant context, scope logic, middleware, encryption)
+npm test              # fast unit tests (tenancy, encryption, authz, auth, audit)
 npm run verify:rls    # TEN-1: proves Postgres RLS isolates tenants, via PGlite (no DB server needed)
 npm run verify:ten2   # TEN-2: proves cross-tenant reads exist only as a metadata-only projection
 npm run verify:crypto # TEN-3: proves per-tenant encryption at rest and crypto-shredding
+npm run verify:audit  # EP1-S12: proves the audit log is append-only and tamper-evident
 npm run typecheck     # full TypeScript type-check
 ```
 
@@ -123,6 +124,16 @@ precedence policy ([`tenant_auth_settings`](prisma/schema.prisma)): `record_firs
 always falls back to the record. Reporting line (`reports_to`) resolves the same
 way — the authoritative source per tenant (HRIS / IdP groups / manual) is a
 config choice, which is what OQ-2 was about.
+
+### Audit log (EP1-S12 skeleton; GOV-4 extends)
+
+An append-only, tamper-evident event log. [`AuditService.record`](src/audit/audit.service.ts)
+links each event to the previous with a SHA-256 hash chain
+(`hash = SHA256(prevHash + canonical(event))`, [audit-event.ts](src/audit/audit-event.ts)),
+so any retrospective change, deletion or reordering is caught by
+`verifyIntegrity` (ABC-4). A DB trigger also blocks `UPDATE`/`DELETE` outright.
+Concrete write-sites (impersonation, tier changes, engagement edits, exports,
+user/permission changes) are wired by their own stories.
 
 ### Deployment modes (EP1-S4 / TEN-4)
 

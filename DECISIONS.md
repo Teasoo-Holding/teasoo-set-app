@@ -25,6 +25,12 @@ Newest decisions go at the **top** of the "Decisions" list. Open questions live 
 
 ## Decisions
 
+### D-0014 — Audit log is append-only + hash-chained for tamper-evidence
+**What we decided (EP1-S12 skeleton; ABC-4):** The audit log is append-only with two independent tamper-resistance layers: (1) a per-tenant SHA-256 hash chain (`hash = SHA256(prevHash + canonical(event))`) that `verifyIntegrity` recomputes to detect any alteration/deletion/reordering, and (2) a database trigger that blocks `UPDATE`/`DELETE`. `AuditService.record` is the single append API; concrete write-sites are added by their own stories (impersonation #9, tier changes, engagement edits, exports, GOV-1 user/permission changes), and GOV-4 extends this with retention, export and scoped reads.
+**Why:** ABC-4 requires the log to *demonstrate* records were not retrospectively altered — that evidentiary property needs cryptographic linkage, not just access control. The hash chain gives detectability even if someone bypasses the trigger (proven in `verify:audit`); the trigger gives plain immutability at the DB. Building it as a skeleton now means every later governance/impersonation story writes to one consistent, verifiable log.
+**Deferred to GOV-4:** advisory-lock serialization of concurrent writers (the unique `(tenant_id, seq)` constraint currently fails a racing duplicate rather than corrupting the chain), periodic external anchoring/signing of the chain head, retention config, and read-scoping/RLS.
+**Status:** ✅ Active. 6 unit tests + `verify:audit` (append-only trigger blocks UPDATE/DELETE; untampered chain verifies; a row altered behind the trigger is detected).
+
 ### D-0013 — Identity attributes resolved by per-tenant precedence (AUTH-2)
 **What we decided (AUTH-2):** Role, function and reporting line are resolved at sign-in by combining the SET user record with IdP claims, per a per-tenant `precedence` policy (`tenant_auth_settings`): `record_first` (default) or `idp_first`, with configurable dotted claim paths (e.g. `app_metadata.role`). Role always falls back to the record so a session can never be role-less.
 **Why:** The PRD makes precedence tenant-configurable, and this is exactly the mechanism OQ-2 (authoritative org-hierarchy source: HRIS / Entra ID groups / manual) needs — each tenant chooses its source via config rather than us hard-coding one. Defaulting to `record_first` is safe: IdP claims cannot silently escalate a role unless a tenant opts in.

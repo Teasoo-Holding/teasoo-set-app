@@ -1,4 +1,5 @@
 import { MiddlewareConsumer, Module, NestModule, RequestMethod } from '@nestjs/common';
+import { AuditModule } from './audit/audit.module';
 import { AuthModule } from './auth/auth.module';
 import { SupabaseSessionMiddleware } from './auth/supabase-session.middleware';
 import { AuthzModule } from './authz/authz.module';
@@ -14,6 +15,7 @@ import { TenantContextMiddleware } from './tenancy/tenant-context.middleware';
   imports: [
     PrismaModule,
     DeploymentModule,
+    AuditModule,
     AuthModule,
     AuthzModule,
     EncryptionModule,

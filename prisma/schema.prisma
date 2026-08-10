@@ -77,6 +77,28 @@ model TenantDomain {
   @@map("tenant_domains")
 }
 
+/// Append-only, hash-chained audit event (EP1-S12 skeleton; GOV-4 extends it).
+/// `hash` = SHA256(prevHash + canonical(event)); the per-tenant chain makes any
+/// retrospective alteration, deletion or reordering detectable (ABC-4). The
+/// table is also protected by an append-only trigger (see the migration).
+model AuditEvent {
+  id           String   @id @default(uuid()) @db.Uuid
+  tenantId     String   @map("tenant_id") @db.Uuid
+  seq          Int
+  occurredAt   DateTime @map("occurred_at")
+  actorUserId  String?  @map("actor_user_id") @db.Uuid
+  action       String
+  resourceType String?  @map("resource_type")
+  resourceId   String?  @map("resource_id")
+  metadata     Json
+  prevHash     String   @map("prev_hash")
+  hash         String
+
+  @@unique([tenantId, seq])
+  @@index([tenantId, seq])
+  @@map("audit_events")
+}
+
 /// Per-tenant envelope-encryption key (TEN-3). `wrappedDek` is the tenant's Data
 /// Encryption Key, itself encrypted with the master KEK. Setting it NULL and
 /// stamping `destroyedAt` is crypto-shredding: every free-text value encrypted
