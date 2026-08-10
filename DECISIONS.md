@@ -25,6 +25,11 @@ Newest decisions go at the **top** of the "Decisions" list. Open questions live 
 
 ## Decisions
 
+### D-0008 — Cross-tenant reads via a restricted-role, metadata-only view
+**What we decided (TEN-2):** The only cross-tenant read path is a `platform_tenant_metrics` SQL view exposing counts + timestamps + tenant slug (no stakeholder names, no notes), consumed by a separate `PlatformAnalyticsService` on its own connection, excluded from the tenant middleware. The view is read by a dedicated `teasoo_analytics` role that has `SELECT` on the view and **no** privilege on the base tables. The view runs with its owner's rights (owner must bypass RLS — superuser or a `BYPASSRLS` platform role), so it aggregates across tenants while the analytics role itself can never read a base-table row.
+**Why:** Makes "no names/notes leave the tenant boundary" a *structural* guarantee (a grant, enforced by the database) rather than a matter of application discipline. Even buggy analytics code physically cannot select a stakeholder name. Cross-tenant joins from the app role remain blocked by the TEN-1 RLS.
+**Status:** ✅ Active. Proven by `npm run verify:ten2` (4 checks).
+
 ### D-0007 — Test strategy: Jest for units, PGlite script for RLS
 **What we decided:** Unit-test the pure/app-layer logic (tenant context, scope function, middleware) with **Jest** in transpile-only mode (`isolatedModules`), with a separate `npm run typecheck` (`tsc --noEmit`) for full type-checking. Prove the database RLS layer with a **standalone script** (`npm run verify:rls`) that runs the real migration SQL against **PGlite** (PostgreSQL 16 in WASM) as a non-superuser role.
 **Why:** (1) ts-jest type-checking every generated Prisma type made the suite take ~286s; transpile-only cut it to ~7s, and `tsc --noEmit` still guards types. (2) PGlite loads its WASM via dynamic `import()`, which Jest's sandboxed VM blocks — so the RLS proof runs as a plain Node script instead. (3) PGlite needs no DB server and runs anywhere, and RLS only enforces against a non-superuser role, so the script does `SET ROLE app_user`. A local Postgres install was attempted first but the EDB installer mirror returned 403.

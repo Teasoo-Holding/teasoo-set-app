@@ -12,7 +12,8 @@
     "typecheck": "tsc --noEmit",
     "test": "jest",
     "test:watch": "jest --watch",
-    "verify:rls": "ts-node --transpile-only scripts/verify-rls.ts"
+    "verify:rls": "ts-node --transpile-only scripts/verify-rls.ts",
+    "verify:ten2": "ts-node --transpile-only scripts/verify-cross-tenant.ts"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.0",
