@@ -24,8 +24,24 @@ model Tenant {
   encryptionKey TenantEncryptionKey?
   users         User[]
   domains       TenantDomain[]
+  authSettings  TenantAuthSettings?
 
   @@map("tenants")
+}
+
+/// Per-tenant precedence for resolving role/function/reporting-line at sign-in
+/// (AUTH-2): whether IdP claims or the SET user record wins, and which JWT claim
+/// carries each attribute.
+model TenantAuthSettings {
+  tenantId       String  @id @map("tenant_id") @db.Uuid
+  precedence     String  @default("record_first") // 'record_first' | 'idp_first'
+  roleClaim      String? @map("role_claim")
+  functionClaim  String? @map("function_claim")
+  reportsToClaim String? @map("reports_to_claim")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@map("tenant_auth_settings")
 }
 
 /// A user of a tenant. Identity is federated via Supabase Auth (SSO); this
@@ -37,11 +53,14 @@ model User {
   email          String
   role           String
   functionId     String?  @map("function_id") @db.Uuid
+  reportsToId    String?  @map("reports_to_id") @db.Uuid
   status         String   @default("active")
   supabaseUserId String?  @unique @map("supabase_user_id")
   createdAt      DateTime @default(now()) @map("created_at")
 
-  tenant Tenant @relation(fields: [tenantId], references: [id])
+  tenant    Tenant @relation(fields: [tenantId], references: [id])
+  reportsTo User?  @relation("UserReports", fields: [reportsToId], references: [id])
+  reports   User[] @relation("UserReports")
 
   @@unique([tenantId, email])
   @@map("users")

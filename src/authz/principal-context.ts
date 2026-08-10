@@ -7,6 +7,8 @@ export interface RequestPrincipal {
   role: Role;
   /** The function the user belongs to, for function-scoped checks (may be absent for org-wide roles). */
   functionId?: string;
+  /** The user this person reports to, for escalation routing / team rollups. */
+  reportsToId?: string;
 }
 
 /**

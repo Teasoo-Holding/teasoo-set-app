@@ -25,6 +25,12 @@ Newest decisions go at the **top** of the "Decisions" list. Open questions live 
 
 ## Decisions
 
+### D-0013 — Identity attributes resolved by per-tenant precedence (AUTH-2)
+**What we decided (AUTH-2):** Role, function and reporting line are resolved at sign-in by combining the SET user record with IdP claims, per a per-tenant `precedence` policy (`tenant_auth_settings`): `record_first` (default) or `idp_first`, with configurable dotted claim paths (e.g. `app_metadata.role`). Role always falls back to the record so a session can never be role-less.
+**Why:** The PRD makes precedence tenant-configurable, and this is exactly the mechanism OQ-2 (authoritative org-hierarchy source: HRIS / Entra ID groups / manual) needs — each tenant chooses its source via config rather than us hard-coding one. Defaulting to `record_first` is safe: IdP claims cannot silently escalate a role unless a tenant opts in.
+**OQ-2:** the *mechanism* is delivered; the operational default per tenant (and specifically where reporting-line comes from) is still a per-onboarding config choice, not a code blocker.
+**Status:** ✅ Active. 13 unit tests (claim precedence matrix, claim extraction) + an e2e proving an `idp_first` role claim elevates permissions end-to-end.
+
 ### D-0012 — SSO via Supabase Auth; the app only verifies JWTs
 **What we decided (AUTH-1):** Use **Supabase Auth** for the enterprise-SSO handshakes (SAML/OIDC, sessions, MFA); it issues a JWT. Our NestJS app **verifies** that JWT (via the project JWT secret or Supabase JWKS, checking issuer/audience/expiry) and owns the rest: email-domain → tenant routing (`tenant_domains`), user → role/function mapping (`users`), and RBAC. A verified session supersedes the dev `x-*` header seams from earlier stories. Stack context: the project runs on Supabase + Vercel.
 **Why:** We are already on Supabase, whose Auth handles SAML/OIDC, session management and MFA as a managed feature — far less auth code to build, secure and maintain than hand-rolling `@node-saml`/`openid-client`, and it fits the "verified session claims" design we already had. `jose` verifies the token (pinned to v5 for its CommonJS build — v6 is ESM-only and Jest could not load it).
@@ -97,7 +103,7 @@ These come from PRD §11.4 and gate specific work. They are **not decided yet** 
 | # | Question | What it blocks | Recommendation in PRD |
 |---|---|---|---|
 | ~~OQ-1~~ | ~~Does Unilever require a dedicated instance + specific data-residency region?~~ **RESOLVED 2026-08-10 → D-0011:** No, and region does not matter — Unilever runs on the shared instance. | — | — |
-| OQ-2 | Authoritative source for the org hierarchy — HRIS, Entra ID groups, or manual? | SSO claim resolution (#7); escalation routing | — |
+| OQ-2 | Authoritative source for the org hierarchy — HRIS, Entra ID groups, or manual? | SSO claim resolution (#7); escalation routing | **Mechanism delivered (D-0013):** per-tenant `precedence` config supports any source. Still open: the default choice per tenant at onboarding. |
 | OQ-3 | One Unilever Nigeria entity, or multi-country within one tenant? | Data model — a `business_unit` dimension above function | Cheaper to add now than later |
 | OQ-4 | Who holds Superadmin in production? | RBAC config (#10) | A Corporate Affairs ops owner, not the MD |
 | OQ-5 | Single-axis or two-axis sentiment model? | Sentiment stories (#38–#40) | Ship single-axis, test in pilot, revisit |

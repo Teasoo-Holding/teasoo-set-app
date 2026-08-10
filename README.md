@@ -115,6 +115,15 @@ dev `x-*` headers. `GET /auth/me` returns the current identity.
 The `x-tenant-id` / `x-user-*` headers remain a **dev-only fallback** for when
 Supabase auth is not configured; a present bearer token always wins.
 
+**Role/function/reporting-line resolution (EP1-S6 / AUTH-2).** Each tenant has a
+precedence policy ([`tenant_auth_settings`](prisma/schema.prisma)): `record_first`
+(default — the SET record is authoritative, IdP claims fill gaps) or `idp_first`
+(a configured JWT claim such as `app_metadata.role` overrides the record). The
+[`claim-resolver`](src/auth/claim-resolver.ts) combines the two sources; role
+always falls back to the record. Reporting line (`reports_to`) resolves the same
+way — the authoritative source per tenant (HRIS / IdP groups / manual) is a
+config choice, which is what OQ-2 was about.
+
 ### Deployment modes (EP1-S4 / TEN-4)
 
 The same codebase runs as a **shared** multi-tenant instance (the default —

@@ -13,6 +13,7 @@ export class AuthController {
       userId: session.userId,
       role: session.role,
       functionId: session.functionId,
+      reportsToId: session.reportsToId,
       tenant: session.tenantSlug,
     };
   }

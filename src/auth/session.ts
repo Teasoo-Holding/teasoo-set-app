@@ -7,6 +7,7 @@ export interface AppSession {
   userId: string;
   role: Role;
   functionId?: string;
+  reportsToId?: string;
 }
 
 const SESSION_KEY = Symbol('app.session');

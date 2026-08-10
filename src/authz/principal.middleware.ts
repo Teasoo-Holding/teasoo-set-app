@@ -31,7 +31,12 @@ export class PrincipalMiddleware implements NestMiddleware {
     // A verified Supabase session (AUTH-1) is the trusted source when present.
     const session = getSession(req);
     if (session) {
-      return { userId: session.userId, role: session.role, functionId: session.functionId };
+      return {
+        userId: session.userId,
+        role: session.role,
+        functionId: session.functionId,
+        reportsToId: session.reportsToId,
+      };
     }
 
     const userId = req.header('x-user-id')?.trim();

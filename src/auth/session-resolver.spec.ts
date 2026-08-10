@@ -1,15 +1,16 @@
 import { UnauthorizedException } from '@nestjs/common';
 import { SignJWT } from 'jose';
 import { Role } from '../authz/role';
-import { DirectoryUser, TenantDirectory, UserDirectory } from './directories';
+import { AuthSettingsDirectory, DirectoryUser, TenantDirectory, UserDirectory } from './directories';
+import { TenantAuthPolicy } from './auth-settings';
 import { SessionResolver } from './session-resolver';
 import { SupabaseTokenVerifier } from './supabase-token-verifier';
 
 const SECRET = new TextEncoder().encode('resolver-secret');
 const ISSUER = 'https://proj.supabase.co/auth/v1';
 
-const token = (email: string) =>
-  new SignJWT({ sub: 'sub-1', email })
+const token = (email: string, extra: Record<string, unknown> = {}) =>
+  new SignJWT({ sub: 'sub-1', email, ...extra })
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuer(ISSUER)
     .setAudience('authenticated')
@@ -28,22 +29,34 @@ class FakeUsers implements UserDirectory {
     return this.users[`${tenantSlug}:${email}`] ?? null;
   }
 }
+class FakeAuthSettings implements AuthSettingsDirectory {
+  constructor(private readonly policy: TenantAuthPolicy | null = null) {}
+  async findByTenant() {
+    return this.policy;
+  }
+}
 
-function resolver(tenants: TenantDirectory, users: UserDirectory) {
+function resolver(tenants: TenantDirectory, users: UserDirectory, settings?: AuthSettingsDirectory) {
   const verifier = new SupabaseTokenVerifier({ secret: SECRET, issuer: ISSUER, audience: 'authenticated' });
-  return new SessionResolver(verifier, tenants, users);
+  return new SessionResolver(verifier, tenants, users, settings ?? new FakeAuthSettings());
 }
 
 describe('SessionResolver', () => {
   const tenants = new FakeTenants({ 'acme.com': 'acme' });
   const users = new FakeUsers({
-    'acme:ada@acme.com': { userId: 'u1', role: Role.FUNCTION_LEAD, functionId: 'reg', status: 'active' },
+    'acme:ada@acme.com': { userId: 'u1', role: Role.FUNCTION_LEAD, functionId: 'reg', reportsToId: 'boss', status: 'active' },
     'acme:sus@acme.com': { userId: 'u2', role: Role.FIELD, status: 'suspended' },
   });
 
-  it('resolves a verified token to a session', async () => {
+  it('resolves a verified token to a session (record-first default)', async () => {
     const session = await resolver(tenants, users).resolve(await token('Ada@acme.com'));
-    expect(session).toEqual({ tenantSlug: 'acme', userId: 'u1', role: Role.FUNCTION_LEAD, functionId: 'reg' });
+    expect(session).toEqual({
+      tenantSlug: 'acme',
+      userId: 'u1',
+      role: Role.FUNCTION_LEAD,
+      functionId: 'reg',
+      reportsToId: 'boss',
+    });
   });
 
   it('rejects an invalid token', async () => {
@@ -63,8 +76,30 @@ describe('SessionResolver', () => {
   });
 
   it('rejects an inactive user', async () => {
-    await expect(resolver(tenants, users).resolve(await token('sus@acme.com'))).rejects.toThrow(
-      /not active/,
-    );
+    await expect(resolver(tenants, users).resolve(await token('sus@acme.com'))).rejects.toThrow(/not active/);
+  });
+
+  describe('AUTH-2 claim precedence', () => {
+    const idpFirst = new FakeAuthSettings({ precedence: 'idp_first', roleClaim: 'app_metadata.role' });
+
+    it('idp_first lets an IdP role claim override the record', async () => {
+      const session = await resolver(tenants, users, idpFirst).resolve(
+        await token('ada@acme.com', { app_metadata: { role: 'ADMIN' } }),
+      );
+      expect(session.role).toBe(Role.ADMIN);
+    });
+
+    it('idp_first falls back to the record when the claim is absent', async () => {
+      const session = await resolver(tenants, users, idpFirst).resolve(await token('ada@acme.com'));
+      expect(session.role).toBe(Role.FUNCTION_LEAD);
+    });
+
+    it('record_first ignores an IdP role claim', async () => {
+      const recordFirst = new FakeAuthSettings({ precedence: 'record_first', roleClaim: 'app_metadata.role' });
+      const session = await resolver(tenants, users, recordFirst).resolve(
+        await token('ada@acme.com', { app_metadata: { role: 'ADMIN' } }),
+      );
+      expect(session.role).toBe(Role.FUNCTION_LEAD);
+    });
   });
 });

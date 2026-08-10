@@ -8,15 +8,15 @@ import { Test } from '@nestjs/testing';
 import { SignJWT } from 'jose';
 import request from 'supertest';
 import { AppModule } from '../src/app.module';
-import { TENANT_DIRECTORY, USER_DIRECTORY } from '../src/auth/directories';
+import { AUTH_SETTINGS_DIRECTORY, TENANT_DIRECTORY, USER_DIRECTORY } from '../src/auth/directories';
 import { Role } from '../src/authz/role';
 import { PrismaService } from '../src/prisma/prisma.service';
 import { StakeholdersService } from '../src/stakeholders/stakeholders.service';
 
 const SECRET = 'e2e-supabase-secret';
 
-function signToken(email: string, secret = SECRET) {
-  return new SignJWT({ sub: 'sub-1', email })
+function signToken(email: string, extra: Record<string, unknown> = {}, secret = SECRET) {
+  return new SignJWT({ sub: 'sub-1', email, ...extra })
     .setProtectedHeader({ alg: 'HS256' })
     .setAudience('authenticated')
     .setExpirationTime('1h')
@@ -46,6 +46,11 @@ describe('Supabase auth (e2e)', () => {
           slug === 'acme' && email === 'ada@acme.com'
             ? { userId: 'u1', role: Role.FIELD, status: 'active' }
             : null,
+      })
+      .overrideProvider(AUTH_SETTINGS_DIRECTORY)
+      .useValue({
+        // idp_first so an app_metadata.role claim overrides the record (AUTH-2).
+        findByTenant: async () => ({ precedence: 'idp_first', roleClaim: 'app_metadata.role' }),
       })
       .compile();
 
@@ -95,5 +100,15 @@ describe('Supabase auth (e2e)', () => {
       .get('/stakeholders')
       .set('Authorization', `Bearer ${token}`)
       .expect(401);
+  });
+
+  it('applies an IdP role claim over the record (AUTH-2, idp_first)', async () => {
+    // The record role is FIELD (cannot create); the token elevates to ADMIN.
+    const token = await signToken('ada@acme.com', { app_metadata: { role: 'ADMIN' } });
+    await request(app.getHttpServer())
+      .post('/stakeholders')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ name: 'New Agency' })
+      .expect(201);
   });
 });
