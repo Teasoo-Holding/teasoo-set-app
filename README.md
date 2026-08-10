@@ -100,6 +100,21 @@ declared → allowed; missing principal → 401; insufficient role → 403).
 > stand-in for verified SSO claims. AUTH-1/AUTH-2 (EP1-S5) replaces that source;
 > the matrix and guard are what this story delivers.
 
+### Authentication (EP1-S5 / AUTH-1)
+
+Sign-in is enterprise SSO via **Supabase Auth** — Supabase runs the SAML/OIDC
+handshake and issues a JWT. The app only **verifies** that JWT
+([`SupabaseTokenVerifier`](src/auth/supabase-token-verifier.ts), signature +
+issuer + audience + expiry) and then resolves a session
+([`SessionResolver`](src/auth/session-resolver.ts)): verified email → domain →
+tenant ([`tenant_domains`](prisma/schema.prisma)) → provisioned user → role.
+[`SupabaseSessionMiddleware`](src/auth/supabase-session.middleware.ts) attaches
+that verified session, and the tenant/principal middlewares prefer it over the
+dev `x-*` headers. `GET /auth/me` returns the current identity.
+
+The `x-tenant-id` / `x-user-*` headers remain a **dev-only fallback** for when
+Supabase auth is not configured; a present bearer token always wins.
+
 ### Deployment modes (EP1-S4 / TEN-4)
 
 The same codebase runs as a **shared** multi-tenant instance (the default —

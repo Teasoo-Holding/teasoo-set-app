@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable, NestMiddleware } from '@nestjs/common';
 import { NextFunction, Request, Response } from 'express';
+import { getSession } from '../auth/session';
 import { TenantContext } from './tenant-context';
 
 /**
@@ -24,6 +25,10 @@ export class TenantContextMiddleware implements NestMiddleware {
   }
 
   private resolveTenantId(req: Request): string | undefined {
+    // A verified Supabase session (AUTH-1) is the trusted source when present.
+    const session = getSession(req);
+    if (session) return session.tenantSlug;
+
     const header = req.header('x-tenant-id');
     if (header && header.trim()) return header.trim();
 

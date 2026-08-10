@@ -25,6 +25,12 @@ Newest decisions go at the **top** of the "Decisions" list. Open questions live 
 
 ## Decisions
 
+### D-0012 — SSO via Supabase Auth; the app only verifies JWTs
+**What we decided (AUTH-1):** Use **Supabase Auth** for the enterprise-SSO handshakes (SAML/OIDC, sessions, MFA); it issues a JWT. Our NestJS app **verifies** that JWT (via the project JWT secret or Supabase JWKS, checking issuer/audience/expiry) and owns the rest: email-domain → tenant routing (`tenant_domains`), user → role/function mapping (`users`), and RBAC. A verified session supersedes the dev `x-*` header seams from earlier stories. Stack context: the project runs on Supabase + Vercel.
+**Why:** We are already on Supabase, whose Auth handles SAML/OIDC, session management and MFA as a managed feature — far less auth code to build, secure and maintain than hand-rolling `@node-saml`/`openid-client`, and it fits the "verified session claims" design we already had. `jose` verifies the token (pinned to v5 for its CommonJS build — v6 is ESM-only and Jest could not load it).
+**Config (user-owned):** enable SSO providers + domain mapping in the Supabase dashboard; set `SUPABASE_JWT_SECRET` or `SUPABASE_JWKS_URL` (+ optional issuer/audience). See [[infra-supabase-vercel]] — I flag config, the user applies it.
+**Status:** ✅ Active. 24 tests (verifier incl. asymmetric JWKS, resolver, session helpers) + a 5-case HTTP e2e proving a real signed token drives tenant + principal + RBAC with no dev headers.
+
 ### D-0011 — Deployment mode is config-driven; Unilever runs shared (OQ-1 answered)
 **What we decided (TEN-4):** The same codebase serves both a `shared` multi-tenant instance and a `dedicated` single-tenant instance, selected by `DEPLOYMENT_MODE`. A dedicated instance points `DATABASE_URL` / `ANALYTICS_DATABASE_URL` / `MASTER_ENCRYPTION_KEY` at isolated resources and sets `DEDICATED_TENANT_SLUG`; a global `DedicatedTenantGuard` makes it serve only that tenant (404 for any other). Config is validated fail-fast at startup, and `/health` reports mode/region.
 **OQ-1 answer (2026-08-10, from the user):** Unilever does **not** require a dedicated instance, and data-residency region does not matter — so **Unilever runs on the shared instance**. The dedicated-instance path is still built because TEN-4 requires it be *available* for future enterprise tenants; it is no longer a Phase-0 blocker.

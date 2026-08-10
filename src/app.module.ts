@@ -1,4 +1,6 @@
 import { MiddlewareConsumer, Module, NestModule, RequestMethod } from '@nestjs/common';
+import { AuthModule } from './auth/auth.module';
+import { SupabaseSessionMiddleware } from './auth/supabase-session.middleware';
 import { AuthzModule } from './authz/authz.module';
 import { PrincipalMiddleware } from './authz/principal.middleware';
 import { DeploymentModule } from './deployment/deployment.module';
@@ -12,6 +14,7 @@ import { TenantContextMiddleware } from './tenancy/tenant-context.middleware';
   imports: [
     PrismaModule,
     DeploymentModule,
+    AuthModule,
     AuthzModule,
     EncryptionModule,
     StakeholdersModule,
@@ -20,15 +23,26 @@ import { TenantContextMiddleware } from './tenancy/tenant-context.middleware';
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer): void {
-    // Every tenant route runs inside a resolved tenant context (TEN-1) and, when
-    // present, an authenticated principal (§4.1)...
+    // Verify the Supabase session (AUTH-1) on every route except the non-tenant
+    // platform/health endpoints. This attaches the verified session for the
+    // tenant/principal middlewares and the /auth endpoints to read.
     consumer
-      .apply(TenantContextMiddleware, PrincipalMiddleware)
-      // ...except routes that are not tenant-scoped: the cross-tenant platform
-      // routes (TEN-2) and the deployment health/identity endpoint (TEN-4).
+      .apply(SupabaseSessionMiddleware)
       .exclude(
         { path: 'platform/(.*)', method: RequestMethod.ALL },
         { path: 'health', method: RequestMethod.ALL },
+      )
+      .forRoutes('*');
+
+    // Resolve tenant (TEN-1) and principal (§4.1) for tenant-scoped routes only —
+    // both prefer the verified session over the dev headers. The /auth endpoints
+    // are pre-tenant and read the session directly.
+    consumer
+      .apply(TenantContextMiddleware, PrincipalMiddleware)
+      .exclude(
+        { path: 'platform/(.*)', method: RequestMethod.ALL },
+        { path: 'health', method: RequestMethod.ALL },
+        { path: 'auth/(.*)', method: RequestMethod.ALL },
       )
       .forRoutes('*');
   }

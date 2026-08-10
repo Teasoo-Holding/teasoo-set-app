@@ -1,5 +1,6 @@
 import { Injectable, NestMiddleware } from '@nestjs/common';
 import { NextFunction, Request, Response } from 'express';
+import { getSession } from '../auth/session';
 import { PrincipalContext, RequestPrincipal } from './principal-context';
 import { parseRole } from './role';
 
@@ -27,6 +28,12 @@ export class PrincipalMiddleware implements NestMiddleware {
   }
 
   private resolve(req: Request): RequestPrincipal | undefined {
+    // A verified Supabase session (AUTH-1) is the trusted source when present.
+    const session = getSession(req);
+    if (session) {
+      return { userId: session.userId, role: session.role, functionId: session.functionId };
+    }
+
     const userId = req.header('x-user-id')?.trim();
     const role = parseRole(req.header('x-user-role'));
     if (!userId || !role) return undefined;

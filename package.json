@@ -21,6 +21,7 @@
     "@nestjs/core": "^11.0.0",
     "@nestjs/platform-express": "^11.0.0",
     "@prisma/client": "^6.2.0",
+    "jose": "^5.10.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1"
   },
@@ -41,11 +42,23 @@
   },
   "jest": {
     "testEnvironment": "node",
-    "roots": ["<rootDir>/src", "<rootDir>/test"],
-    "testMatch": ["**/*.spec.ts"],
-    "moduleFileExtensions": ["ts", "js", "json"],
+    "roots": [
+      "<rootDir>/src",
+      "<rootDir>/test"
+    ],
+    "testMatch": [
+      "**/*.spec.ts"
+    ],
+    "moduleFileExtensions": [
+      "ts",
+      "js",
+      "json"
+    ],
     "transform": {
-      "^.+\\.ts$": ["ts-jest", {}]
+      "^.+\\.ts$": [
+        "ts-jest",
+        {}
+      ]
     }
   }
 }

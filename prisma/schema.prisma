@@ -22,8 +22,40 @@ model Tenant {
   createdAt     DateTime             @default(now()) @map("created_at")
   stakeholders  Stakeholder[]
   encryptionKey TenantEncryptionKey?
+  users         User[]
+  domains       TenantDomain[]
 
   @@map("tenants")
+}
+
+/// A user of a tenant. Identity is federated via Supabase Auth (SSO); this
+/// record maps a verified email/subject to the tenant, role and function that
+/// authorization uses. `supabaseUserId` is the Supabase `sub` claim.
+model User {
+  id             String   @id @default(uuid()) @db.Uuid
+  tenantId       String   @map("tenant_id") @db.Uuid
+  email          String
+  role           String
+  functionId     String?  @map("function_id") @db.Uuid
+  status         String   @default("active")
+  supabaseUserId String?  @unique @map("supabase_user_id")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@unique([tenantId, email])
+  @@map("users")
+}
+
+/// Email-domain → tenant routing (AUTH-1). A verified email's domain selects the
+/// tenant the user belongs to.
+model TenantDomain {
+  domain   String @id
+  tenantId String @map("tenant_id") @db.Uuid
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@map("tenant_domains")
 }
 
 /// Per-tenant envelope-encryption key (TEN-3). `wrappedDek` is the tenant's Data
