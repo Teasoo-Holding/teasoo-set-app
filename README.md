@@ -36,10 +36,11 @@ npm start                     # run the API
 ## Tests
 
 ```bash
-npm test            # fast unit tests (tenant context, scope logic, middleware)
-npm run verify:rls  # TEN-1: proves Postgres RLS isolates tenants, via PGlite (no DB server needed)
-npm run verify:ten2 # TEN-2: proves cross-tenant reads exist only as a metadata-only projection
-npm run typecheck   # full TypeScript type-check
+npm test              # fast unit tests (tenant context, scope logic, middleware, encryption)
+npm run verify:rls    # TEN-1: proves Postgres RLS isolates tenants, via PGlite (no DB server needed)
+npm run verify:ten2   # TEN-2: proves cross-tenant reads exist only as a metadata-only projection
+npm run verify:crypto # TEN-3: proves per-tenant encryption at rest and crypto-shredding
+npm run typecheck     # full TypeScript type-check
 ```
 
 ## Tenant isolation (EP1-S1 / TEN-1)
@@ -69,3 +70,17 @@ reads a **metadata-only view** (`platform_tenant_metrics`: counts and timestamps
 no names or notes). It connects as the `teasoo_analytics` role, which has
 `SELECT` on that view and no privilege on the base tables, so it *structurally*
 cannot read stakeholder names or engagement notes.
+
+### Per-tenant encryption (EP1-S3 / TEN-3)
+
+Free-text fields are encrypted at rest with AES-256-GCM under a **per-tenant Data
+Encryption Key (DEK)**. Envelope encryption: each DEK is stored wrapped by a
+master KEK (a KMS-managed key in production; `MASTER_ENCRYPTION_KEY` in dev). The
+[`TenantFieldCrypto`](src/encryption/tenant-field-crypto.ts) seam encrypts/decrypts
+using the ambient tenant's key — EP-3 (engagement notes) and EP-6 (escalation
+descriptions) will call it.
+
+**Contractual deletion = key destruction (crypto-shredding).**
+[`TenantKeyService.destroy`](src/encryption/tenant-key.service.ts) drops the
+tenant's wrapped DEK and tombstones it; every value ever encrypted under that DEK
+becomes permanently unrecoverable, with no need to locate and overwrite each row.

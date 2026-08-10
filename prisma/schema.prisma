@@ -16,13 +16,31 @@ datasource db {
 }
 
 model Tenant {
-  id           String        @id @default(uuid()) @db.Uuid
-  slug         String        @unique
-  name         String
-  createdAt    DateTime      @default(now()) @map("created_at")
-  stakeholders Stakeholder[]
+  id            String               @id @default(uuid()) @db.Uuid
+  slug          String               @unique
+  name          String
+  createdAt     DateTime             @default(now()) @map("created_at")
+  stakeholders  Stakeholder[]
+  encryptionKey TenantEncryptionKey?
 
   @@map("tenants")
+}
+
+/// Per-tenant envelope-encryption key (TEN-3). `wrappedDek` is the tenant's Data
+/// Encryption Key, itself encrypted with the master KEK. Setting it NULL and
+/// stamping `destroyedAt` is crypto-shredding: every free-text value encrypted
+/// under that DEK becomes permanently unrecoverable — the mechanism for
+/// contractual data deletion.
+model TenantEncryptionKey {
+  tenantId    String    @id @map("tenant_id") @db.Uuid
+  wrappedDek  Bytes?    @map("wrapped_dek")
+  keyVersion  Int       @default(1) @map("key_version")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  destroyedAt DateTime? @map("destroyed_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@map("tenant_encryption_keys")
 }
 
 /// Minimal tenant-scoped model, present only to prove the TEN-1 mechanism.

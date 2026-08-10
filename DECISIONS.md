@@ -25,6 +25,11 @@ Newest decisions go at the **top** of the "Decisions" list. Open questions live 
 
 ## Decisions
 
+### D-0009 — Per-tenant encryption via envelope encryption + crypto-shredding
+**What we decided (TEN-3):** Free-text is encrypted at rest with AES-256-GCM under a per-tenant Data Encryption Key (DEK). Each DEK is stored wrapped by a master KEK (KMS in production, `MASTER_ENCRYPTION_KEY` env in dev) in `tenant_encryption_keys`. Application-layer encryption via a `TenantFieldCrypto` seam (not Postgres `pgcrypto`). Contractual deletion is **crypto-shredding**: destroying the tenant's wrapped DEK makes all their ciphertext permanently unrecoverable.
+**Why:** Per-tenant keys + key-destruction-as-deletion are far cleaner at the application layer than in-database column encryption — one delete of a wrapped key shreds a tenant's data without touching every ciphertext row, and keys never need to reach the database in unwrapped form. AES-256-GCM is authenticated, so wrong-key/tampered reads fail loudly (which is what makes shredding verifiable). The DEK is cached in-process after first unwrap.
+**Status:** ✅ Active. Proven by `npm run verify:crypto` (4 checks) + 19 unit tests. EP-3/EP-6 will apply the seam to engagement notes / escalation descriptions.
+
 ### D-0008 — Cross-tenant reads via a restricted-role, metadata-only view
 **What we decided (TEN-2):** The only cross-tenant read path is a `platform_tenant_metrics` SQL view exposing counts + timestamps + tenant slug (no stakeholder names, no notes), consumed by a separate `PlatformAnalyticsService` on its own connection, excluded from the tenant middleware. The view is read by a dedicated `teasoo_analytics` role that has `SELECT` on the view and **no** privilege on the base tables. The view runs with its owner's rights (owner must bypass RLS — superuser or a `BYPASSRLS` platform role), so it aggregates across tenants while the analytics role itself can never read a base-table row.
 **Why:** Makes "no names/notes leave the tenant boundary" a *structural* guarantee (a grant, enforced by the database) rather than a matter of application discipline. Even buggy analytics code physically cannot select a stakeholder name. Cross-tenant joins from the app role remain blocked by the TEN-1 RLS.

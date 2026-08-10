@@ -1,11 +1,12 @@
 import { MiddlewareConsumer, Module, NestModule, RequestMethod } from '@nestjs/common';
+import { EncryptionModule } from './encryption/encryption.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { PlatformAnalyticsModule } from './platform-analytics/platform-analytics.module';
 import { StakeholdersModule } from './stakeholders/stakeholders.module';
 import { TenantContextMiddleware } from './tenancy/tenant-context.middleware';
 
 @Module({
-  imports: [PrismaModule, StakeholdersModule, PlatformAnalyticsModule],
+  imports: [PrismaModule, EncryptionModule, StakeholdersModule, PlatformAnalyticsModule],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer): void {
