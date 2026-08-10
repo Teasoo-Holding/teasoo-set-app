@@ -25,6 +25,16 @@ Newest decisions go at the **top** of the "Decisions" list. Open questions live 
 
 ## Decisions
 
+### D-0007 — Test strategy: Jest for units, PGlite script for RLS
+**What we decided:** Unit-test the pure/app-layer logic (tenant context, scope function, middleware) with **Jest** in transpile-only mode (`isolatedModules`), with a separate `npm run typecheck` (`tsc --noEmit`) for full type-checking. Prove the database RLS layer with a **standalone script** (`npm run verify:rls`) that runs the real migration SQL against **PGlite** (PostgreSQL 16 in WASM) as a non-superuser role.
+**Why:** (1) ts-jest type-checking every generated Prisma type made the suite take ~286s; transpile-only cut it to ~7s, and `tsc --noEmit` still guards types. (2) PGlite loads its WASM via dynamic `import()`, which Jest's sandboxed VM blocks — so the RLS proof runs as a plain Node script instead. (3) PGlite needs no DB server and runs anywhere, and RLS only enforces against a non-superuser role, so the script does `SET ROLE app_user`. A local Postgres install was attempted first but the EDB installer mirror returned 403.
+**Status:** ✅ Active. All 18 unit tests + 6 RLS checks pass.
+
+### D-0006 — Tech stack: NestJS + Prisma + PostgreSQL (TypeScript full-stack)
+**What we decided:** Build the backend on **NestJS (Node/TypeScript)** with **Prisma** as the ORM and **PostgreSQL** as the database. The tenant-isolation mechanism (TEN-1) is: NestJS middleware resolves the tenant per request and stores it in `AsyncLocalStorage`; a Prisma client extension injects `tenant_id` on every query; PostgreSQL **row-level security (RLS)** is the second line of defence. We build **story by story**, not the whole app at once.
+**Why:** One language across front and back (the PWA is expected to be React/TS), so types and validation can be shared. NestJS's middleware/guard/DI model maps directly onto "tenant-scoped by middleware, not developer discipline" (TEN-1). PostgreSQL was effectively already implied — the PRD explicitly requires database RLS as a second line of defence (§5.1), which is a Postgres feature.
+**Status:** ✅ Active. Chosen 2026-08-10 at the start of EP1-S1 (issue #2).
+
 ### D-0005 — GitHub API calls use BOM-less JSON via `--input` files
 **What we decided:** When creating issues/sub-issues through the GitHub CLI, we pass a temp JSON file (`gh api --input file.json`) written as UTF-8 **without** a byte-order mark, rather than passing values as command-line arguments.
 **Why:** Two problems bit us on the first run. (1) Titles containing quotes/parentheses (e.g. `Tenant Admin impersonation ("view as")`) broke Windows command-line argument parsing. (2) PowerShell 5.1's `Set-Content -Encoding utf8` adds a BOM, which `gh api` rejects with "Problems parsing JSON". Also, sub-issue links require `sub_issue_id` as a JSON **integer**, not a string. The `--input` + BOM-less approach handles all three cleanly.
@@ -65,3 +75,4 @@ These come from PRD §11.4 and gate specific work. They are **not decided yet** 
 | OQ-5 | Single-axis or two-axis sentiment model? | Sentiment stories (#38–#40) | Ship single-axis, test in pilot, revisit |
 | OQ-6 | Commercial/pricing model — per-seat vs tiered? | Self-serve onboarding plan (EP-13) | Tiered by stakeholder count / org size, unlimited field seats |
 | OQ-7 | Do Heads need cross-function read access? | Directory view (#23); Function Lead home (#60) | Read-only cross-function Directory visibility, tested in pilot |
+| OQ-8 | Canonical product name — "Teasoo SET" (PRD) vs "Stakeholder Intelligence System / SIS" (prototype)? | All UI copy, branding, the login screen | Pick one before frontend build; PRD uses "Teasoo SET" |

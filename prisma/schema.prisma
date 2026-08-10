@@ -1,0 +1,40 @@
+// Teasoo SET — Prisma schema
+//
+// EP1-S1 / TEN-1: tenant isolation. Every tenant-scoped table carries a
+// `tenant_id`. The application layer injects it automatically (see
+// src/tenancy), and the database enforces it independently via row-level
+// security (see the migration SQL). Neither layer relies on developer
+// discipline at the call site.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Tenant {
+  id           String        @id @default(uuid()) @db.Uuid
+  slug         String        @unique
+  name         String
+  createdAt    DateTime      @default(now()) @map("created_at")
+  stakeholders Stakeholder[]
+
+  @@map("tenants")
+}
+
+/// Minimal tenant-scoped model, present only to prove the TEN-1 mechanism.
+/// The full stakeholder registry is EP-2 (REG-1..REG-6) and will extend this.
+model Stakeholder {
+  id        String   @id @default(uuid()) @db.Uuid
+  tenantId  String   @map("tenant_id") @db.Uuid
+  name      String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId])
+  @@map("stakeholders")
+}

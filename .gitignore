@@ -1,3 +1,14 @@
+# Node / build
+node_modules/
+dist/
+*.tsbuildinfo
+
+# Environment
+.env
+
+# Prisma generated client (regenerated from schema)
+prisma/generated/
+
 # Local, machine-specific Claude Code settings
 .claude/settings.local.json
 
