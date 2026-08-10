@@ -99,3 +99,14 @@ declared → allowed; missing principal → 401; insufficient role → 403).
 > The principal is currently read from `x-user-*` headers as a **seam** — a
 > stand-in for verified SSO claims. AUTH-1/AUTH-2 (EP1-S5) replaces that source;
 > the matrix and guard are what this story delivers.
+
+### Deployment modes (EP1-S4 / TEN-4)
+
+The same codebase runs as a **shared** multi-tenant instance (the default —
+Unilever's, per OQ-1) or a **dedicated** single-tenant instance, selected by
+`DEPLOYMENT_MODE`. A dedicated instance points `DATABASE_URL`,
+`ANALYTICS_DATABASE_URL` and `MASTER_ENCRYPTION_KEY` at isolated resources and
+sets `DEDICATED_TENANT_SLUG`; the global
+[`DedicatedTenantGuard`](src/deployment/dedicated-tenant.guard.ts) then serves
+only that tenant (404 for any other). Config is validated fail-fast at startup,
+and `GET /health` reports the instance's mode, tenant and region.

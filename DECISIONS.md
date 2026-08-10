@@ -25,6 +25,12 @@ Newest decisions go at the **top** of the "Decisions" list. Open questions live 
 
 ## Decisions
 
+### D-0011 — Deployment mode is config-driven; Unilever runs shared (OQ-1 answered)
+**What we decided (TEN-4):** The same codebase serves both a `shared` multi-tenant instance and a `dedicated` single-tenant instance, selected by `DEPLOYMENT_MODE`. A dedicated instance points `DATABASE_URL` / `ANALYTICS_DATABASE_URL` / `MASTER_ENCRYPTION_KEY` at isolated resources and sets `DEDICATED_TENANT_SLUG`; a global `DedicatedTenantGuard` makes it serve only that tenant (404 for any other). Config is validated fail-fast at startup, and `/health` reports mode/region.
+**OQ-1 answer (2026-08-10, from the user):** Unilever does **not** require a dedicated instance, and data-residency region does not matter — so **Unilever runs on the shared instance**. The dedicated-instance path is still built because TEN-4 requires it be *available* for future enterprise tenants; it is no longer a Phase-0 blocker.
+**Why:** Keeping the difference to configuration (not a code fork) means one codebase, one release pipeline. The tenant guard is defence-in-depth on top of the physical isolation a dedicated instance already has.
+**Status:** ✅ Active. 11 unit tests + a 3-case dedicated-instance HTTP e2e.
+
 ### D-0010 — RBAC: cumulative role matrix, guard + ambient principal
 **What we decided (§4.1):** Four roles (Field, Function Lead, Leadership, Admin) with a cumulative default permission matrix (each role ⊇ the one below). Enforcement is a global NestJS `PermissionsGuard` reading a `@RequirePermissions` decorator; the actor is an ambient `PrincipalContext` (AsyncLocalStorage), set by `PrincipalMiddleware`. Role is assigned per user and decoupled from job title. The permission list was reverse-engineered from the PRD's scattered rules because the §4.1 matrix table did not extract from the DOCX (it was an image).
 **Why:** Mirrors the dashboards in §7.7 ("Leadership as Function Lead but org-wide", "Admin = Leadership plus Governance"), so a cumulative matrix is the natural model. An ambient principal + global guard keeps authorization out of call sites, consistent with how TenantContext handles tenancy. Data scope (own/function/org) is modelled as distinct permissions rather than baked into one, so scope stays explicit.
@@ -84,7 +90,7 @@ These come from PRD §11.4 and gate specific work. They are **not decided yet** 
 
 | # | Question | What it blocks | Recommendation in PRD |
 |---|---|---|---|
-| OQ-1 | Does Unilever require a dedicated instance + specific data-residency region? | Phase 0 architecture; story #5 (dedicated-instance path) | Assess at contract stage; answer before build starts |
+| ~~OQ-1~~ | ~~Does Unilever require a dedicated instance + specific data-residency region?~~ **RESOLVED 2026-08-10 → D-0011:** No, and region does not matter — Unilever runs on the shared instance. | — | — |
 | OQ-2 | Authoritative source for the org hierarchy — HRIS, Entra ID groups, or manual? | SSO claim resolution (#7); escalation routing | — |
 | OQ-3 | One Unilever Nigeria entity, or multi-country within one tenant? | Data model — a `business_unit` dimension above function | Cheaper to add now than later |
 | OQ-4 | Who holds Superadmin in production? | RBAC config (#10) | A Corporate Affairs ops owner, not the MD |
