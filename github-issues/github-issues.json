@@ -1,0 +1,257 @@
+{
+  "repo": "Teasoo-Holding/teasoo-set-app",
+  "labels": [
+    { "name": "epic", "color": "6f42c1" },
+    { "name": "story", "color": "0e8a16" },
+    { "name": "phase-0", "color": "b60205" },
+    { "name": "phase-1", "color": "d93f0b" },
+    { "name": "phase-1-2", "color": "e99695" },
+    { "name": "phase-2", "color": "fbca04" },
+    { "name": "phase-3", "color": "0052cc" },
+    { "name": "phase-4", "color": "5319e7" },
+    { "name": "cross-cutting", "color": "1d76db" }
+  ],
+  "epics": [
+    {
+      "id": "EP-1",
+      "title": "EP-1: Tenancy & access foundations",
+      "phase_label": "phase-0",
+      "prd_ref": "§5, §7.1",
+      "body": "**Goal:** every other epic depends on a correctly isolated, authenticated tenant shell. Nothing in Phase 1 can start safely until this exists.\n\nPRD reference: §5 Multi-tenancy, §7.1 Authentication and access.\n\nStories are tracked as sub-issues of this epic.",
+      "labels": ["epic", "phase-0"],
+      "stories": [
+        { "id": "EP1-S1", "title": "Tenant-scoped data access middleware", "prd_ref": "TEN-1", "body": "All query paths are tenant-scoped by middleware, not developer discipline; row-level security in the database as second line of defence.\n\nPRD ref: `TEN-1`. Epic: EP-1.", "labels": ["story", "phase-0"] },
+        { "id": "EP1-S2", "title": "Cross-tenant isolation guarantee", "prd_ref": "TEN-2", "body": "No cross-tenant join possible in application code; platform analytics reads only a metadata-only projection (counts/timestamps, no names/notes).\n\nPRD ref: `TEN-2`. Epic: EP-1.", "labels": ["story", "phase-0"] },
+        { "id": "EP1-S3", "title": "Per-tenant encryption for free text", "prd_ref": "TEN-3", "body": "Engagement notes and escalation descriptions encrypted at rest with per-tenant keys; key destruction implements contractual deletion.\n\nPRD ref: `TEN-3`. Epic: EP-1.", "labels": ["story", "phase-0"] },
+        { "id": "EP1-S4", "title": "Dedicated-instance deployment path", "prd_ref": "TEN-4", "body": "Same codebase, separate DB/key store, deployable for enterprise tenants.\n\n**Blocked on open question:** does Unilever require dedicated instance + data residency region (PRD §11.4)? Must be answered before this is built, not just designed.\n\nPRD ref: `TEN-4`. Epic: EP-1.", "labels": ["story", "phase-0"] },
+        { "id": "EP1-S5", "title": "Enterprise SSO sign-in", "prd_ref": "AUTH-1", "body": "SAML 2.0 and OIDC; email-domain routing resolves tenant.\n\nPRD ref: `AUTH-1`. Epic: EP-1.", "labels": ["story", "phase-0"] },
+        { "id": "EP1-S6", "title": "Role/function/reporting-line resolution from IdP", "prd_ref": "AUTH-2", "body": "Tenant-configurable precedence between IdP claims and SET's own user record.\n\n**Depends on open question:** authoritative org-hierarchy source — HRIS, Entra ID groups, or manual (PRD §11.4).\n\nPRD ref: `AUTH-2`. Epic: EP-1.", "labels": ["story", "phase-0"] },
+        { "id": "EP1-S7", "title": "Demo/sandbox mode", "prd_ref": "AUTH-3", "body": "Pre-seeded personas, watermarked, structurally incapable of holding production data.\n\nPRD ref: `AUTH-3`. Epic: EP-1.", "labels": ["story", "phase-0"] },
+        { "id": "EP1-S8", "title": "Configurable session timeout", "prd_ref": "AUTH-4", "body": "Per-tenant, default 12h mobile / 8h desktop.\n\nPRD ref: `AUTH-4`. Epic: EP-1.", "labels": ["story", "phase-0"] },
+        { "id": "EP1-S9", "title": "Tenant Admin impersonation (\"view as\")", "prd_ref": "AUTH-5", "body": "Read-only, banner-flagged, writes to audit log.\n\nPRD ref: `AUTH-5`. Epic: EP-1.", "labels": ["story", "phase-0"] },
+        { "id": "EP1-S10", "title": "RBAC permission matrix", "prd_ref": "§4.1", "body": "Role model decoupled from job title, configurable per tenant; enforce Field / Function Lead / Leadership / Admin permission boundaries.\n\nPRD ref: §4.1. Epic: EP-1.", "labels": ["story", "phase-0"] },
+        { "id": "EP1-S11", "title": "Escalation visibility rule", "prd_ref": "§4.1", "body": "Escalation raised in a function is visible to that Function Lead *and* Leadership simultaneously — does not queue behind the Head.\n\nPRD ref: §4.1 note. Epic: EP-1.", "labels": ["story", "phase-0"] },
+        { "id": "EP1-S12", "title": "Audit log skeleton", "prd_ref": "§7", "body": "Foundational event log (auth, permission changes) that EP-8's full audit log (`GOV-4`) extends.\n\nEpic: EP-1.", "labels": ["story", "phase-0"] }
+      ]
+    },
+    {
+      "id": "EP-2",
+      "title": "EP-2: Stakeholder registry",
+      "phase_label": "phase-1",
+      "prd_ref": "§7.2",
+      "body": "**Goal:** a clean, deduplicated, permissioned directory of stakeholder organizations — the spine everything else hangs off.\n\nPRD reference: §7.2 Stakeholder registry.\n\nStories are tracked as sub-issues of this epic.",
+      "labels": ["epic", "phase-1"],
+      "stories": [
+        { "id": "EP2-S1", "title": "Core stakeholder record", "prd_ref": "REG-1", "body": "Name, type, function, tier, assigned owner, status (active/dormant/archived), current sentiment, risk flag, description.\n\nPRD ref: `REG-1`. Epic: EP-2.", "labels": ["story", "phase-1"] },
+        { "id": "EP2-S2", "title": "Tenant-configurable tiers & cadence", "prd_ref": "REG-2", "body": "Default 3-tier model with cadence (Tier 1 monthly, Tier 2 quarterly, Tier 3 as-needed) and escalation-routing implications; tier count/definitions editable per tenant.\n\nPRD ref: `REG-2`. Epic: EP-2.", "labels": ["story", "phase-1"] },
+        { "id": "EP2-S3", "title": "Tier change approval workflow", "prd_ref": "REG-2", "body": "Leadership/Admin approval required, audit-logged.\n\nPRD ref: `REG-2`. Epic: EP-2.", "labels": ["story", "phase-1"] },
+        { "id": "EP2-S4", "title": "Fuzzy-match dedupe warning at creation", "prd_ref": "REG-3", "body": "Shows possible existing matches before a new stakeholder is created.\n\nPRD ref: `REG-3`. Epic: EP-2.", "labels": ["story", "phase-1"] },
+        { "id": "EP2-S5", "title": "Alias field", "prd_ref": "REG-3", "body": "Every stakeholder record supports aliases (e.g. \"NAFDAC\" / \"N.A.F.D.A.C.\").\n\nPRD ref: `REG-3`. Epic: EP-2.", "labels": ["story", "phase-1"] },
+        { "id": "EP2-S6", "title": "Admin merge tool", "prd_ref": "REG-3", "body": "Merges duplicate records while preserving both records' engagement history.\n\nPRD ref: `REG-3`. Epic: EP-2.", "labels": ["story", "phase-1"] },
+        { "id": "EP2-S7", "title": "Request-a-stakeholder workflow", "prd_ref": "REG-4", "body": "Field user submits request (name, type, why, proposed function) → routes to Function Lead/Admin with dedupe candidates shown to approver; 2-working-day SLA target; requester notified; auto-assigned to requester on approval unless reassigned.\n\nPRD ref: `REG-4`. Epic: EP-2.", "labels": ["story", "phase-1"] },
+        { "id": "EP2-S8", "title": "Directory search & filter", "prd_ref": "REG-5", "body": "By function, type, tier, sentiment, risk flag, owner, last-engagement recency; Leadership's \"Activity by function\" table filters Directory on click.\n\nPRD ref: `REG-5`. Epic: EP-2.", "labels": ["story", "phase-1"] },
+        { "id": "EP2-S9", "title": "Field-user reduced directory view", "prd_ref": "REG-5", "body": "Field users see existence + owner, not engagement notes.\n\n**Depends on open question:** should Heads get read-only cross-function Directory visibility (PRD §11.4)?\n\nPRD ref: `REG-5`. Epic: EP-2.", "labels": ["story", "phase-1"] },
+        { "id": "EP2-S10", "title": "Coverage-gap (\"going cold\") detection", "prd_ref": "REG-6", "body": "Flags any stakeholder with no engagement logged within its tier's expected cadence, surfaced on owner's and Head's dashboards.\n\nPRD ref: `REG-6`. Epic: EP-2.", "labels": ["story", "phase-1"] }
+      ]
+    },
+    {
+      "id": "EP-3",
+      "title": "EP-3: Engagement logging (critical path)",
+      "phase_label": "phase-1",
+      "prd_ref": "§7.3",
+      "body": "**Goal:** capture a meeting in under 60 seconds. This is the epic the product lives or dies on — treat the 60s figure as a hard performance budget for every story below, not an aspiration.\n\nPRD reference: §7.3 Engagement logging.\n\nStories are tracked as sub-issues of this epic.",
+      "labels": ["epic", "phase-1"],
+      "stories": [
+        { "id": "EP3-S1", "title": "One-tap log entry", "prd_ref": "ENG-1", "body": "Reachable from field user's home screen at all times.\n\nPRD ref: `ENG-1`. Epic: EP-3.", "labels": ["story", "phase-1"] },
+        { "id": "EP3-S2", "title": "Minimum viable log", "prd_ref": "ENG-2", "body": "Stakeholder, date, channel, sentiment, one-line summary — five fields, everything else optional.\n\nPRD ref: `ENG-2`. Epic: EP-3.", "labels": ["story", "phase-1"] },
+        { "id": "EP3-S3", "title": "Aggressive smart defaults", "prd_ref": "ENG-3", "body": "Date=today; stakeholder=most-recently-engaged or nearest-by-geolocation if enabled; channel=last used; logger=current user.\n\nPRD ref: `ENG-3`. Epic: EP-3.", "labels": ["story", "phase-1"] },
+        { "id": "EP3-S4", "title": "Tap-target sentiment capture", "prd_ref": "ENG-4", "body": "Three large tap targets on tenant's sentiment scale, not a dropdown.\n\nPRD ref: `ENG-4`. Epic: EP-3.", "labels": ["story", "phase-1"] },
+        { "id": "EP3-S5", "title": "Voice-to-text on summary field", "prd_ref": "ENG-5", "body": "A field officer in a car park will speak but not type.\n\nPRD ref: `ENG-5`. Epic: EP-3.", "labels": ["story", "phase-1"] },
+        { "id": "EP3-S6", "title": "Progressive disclosure of optional fields", "prd_ref": "ENG-6", "body": "Attendees (internal and external), topics/tags, attachments, next-step commitment, escalate-this toggle.\n\nPRD ref: `ENG-6`. Epic: EP-3.", "labels": ["story", "phase-1"] },
+        { "id": "EP3-S7", "title": "Offline-first capture", "prd_ref": "ENG-7", "body": "Draft persists locally, syncs on reconnect, clear pending state. Non-negotiable — treat as launch blocker for field rollout, not a nice-to-have.\n\nPRD ref: `ENG-7`. Epic: EP-3.", "labels": ["story", "phase-1"] },
+        { "id": "EP3-S8", "title": "Draft auto-save", "prd_ref": "ENG-8", "body": "An interrupted log is never lost.\n\nPRD ref: `ENG-8`. Epic: EP-3.", "labels": ["story", "phase-1"] },
+        { "id": "EP3-S9", "title": "Edit window & append-only correction history", "prd_ref": "ENG-9", "body": "Logger can edit own engagement for 24h; after that, edits are visible append-only corrections (evidentiary integrity).\n\nPRD ref: `ENG-9`. Epic: EP-3.", "labels": ["story", "phase-1"] },
+        { "id": "EP3-S10", "title": "Inline commitment creation", "prd_ref": "ENG-10", "body": "Created from engagement, inherits stakeholder, owner defaults to logger, due-date picker with common relative options.\n\nPRD ref: `ENG-10`. Epic: EP-3.", "labels": ["story", "phase-1"] },
+        { "id": "EP3-S11", "title": "Log-on-behalf-of with notification", "prd_ref": "ENG-11", "body": "Head+ can log an engagement on a stakeholder they don't own; owner is notified. Prevents silent parallel engagement.\n\nPRD ref: `ENG-11`. Epic: EP-3.", "labels": ["story", "phase-1"] }
+      ]
+    },
+    {
+      "id": "EP-4",
+      "title": "EP-4: Sentiment, risk & trend",
+      "phase_label": "phase-1-2",
+      "prd_ref": "§7.4",
+      "body": "**Goal:** turn individually-logged engagements into portfolio-level, explainable risk visibility for leadership.\n\nPRD reference: §7.4 Sentiment, risk and trend.\n\nStories are tracked as sub-issues of this epic.",
+      "labels": ["epic", "phase-1-2"],
+      "stories": [
+        { "id": "EP4-S1", "title": "Per-engagement sentiment assertion", "prd_ref": "RISK-1", "body": "Stakeholder's current sentiment = sentiment of most recent engagement.\n\n**Depends on open question:** single-axis vs two-axis sentiment model (PRD §11.4) — recommend shipping single-axis, testing in pilot.\n\nPRD ref: `RISK-1`. Epic: EP-4.", "labels": ["story", "phase-1-2"] },
+        { "id": "EP4-S2", "title": "Portfolio sentiment trend chart", "prd_ref": "RISK-2", "body": "Monthly aggregate with Improving/Stable/Declining label; in-product info affordance documenting the formula. Default weighting: tier-weighted mean, Tier 1×3, Tier 2×2, Tier 3×1.\n\nPRD ref: `RISK-2`. Epic: EP-4.", "labels": ["story", "phase-1-2"] },
+        { "id": "EP4-S3", "title": "Current sentiment mix panel", "prd_ref": "RISK-3", "body": "Percentage split across sentiment values for the visible (role-scoped) portfolio.\n\nPRD ref: `RISK-3`. Epic: EP-4.", "labels": ["story", "phase-1-2"] },
+        { "id": "EP4-S4", "title": "High-risk flag engine", "prd_ref": "RISK-4", "body": "Tenant-configurable rules; defaults = Resistant sentiment on Tier 1/2, sentiment declined 2 steps in 60 days, open escalation exists, overdue High-priority commitment exists, Tier 1 with no engagement in 60 days.\n\nPRD ref: `RISK-4`. Epic: EP-4.", "labels": ["story", "phase-1-2"] },
+        { "id": "EP4-S5", "title": "Explainable flags", "prd_ref": "RISK-5", "body": "Hover/tap a risk indicator states which rule fired — no black-box scoring.\n\nPRD ref: `RISK-5`. Epic: EP-4.", "labels": ["story", "phase-1-2"] },
+        { "id": "EP4-S6", "title": "Trend baseline guard", "prd_ref": "RISK-6", "body": "Requires ≥3 months history before showing a trend; shows an honest \"building baseline\" state before that.\n\nPRD ref: `RISK-6`. Epic: EP-4.", "labels": ["story", "phase-1-2"] }
+      ]
+    },
+    {
+      "id": "EP-5",
+      "title": "EP-5: Commitments",
+      "phase_label": "phase-1",
+      "prd_ref": "§7.5",
+      "body": "**Goal:** track promises in both directions — what the company owes the stakeholder, and what the stakeholder owes the company.\n\nPRD reference: §7.5 Commitments.\n\nStories are tracked as sub-issues of this epic.",
+      "labels": ["epic", "phase-1"],
+      "stories": [
+        { "id": "EP5-S1", "title": "Commitment record", "prd_ref": "COM-1", "body": "Stakeholder, description, internal owner, due date, priority, state (open/done/dropped with reason on drop).\n\nPRD ref: `COM-1`. Epic: EP-5.", "labels": ["story", "phase-1"] },
+        { "id": "EP5-S2", "title": "Field-user \"my open commitments\" view", "prd_ref": "COM-2", "body": "Own open commitments only, sorted by due date, on home screen.\n\nPRD ref: `COM-2`. Epic: EP-5.", "labels": ["story", "phase-1"] },
+        { "id": "EP5-S3", "title": "Head/Leadership commitments-in-scope view", "prd_ref": "COM-3", "body": "All commitments in scope with owner attribution + \"due this week\" count.\n\nPRD ref: `COM-3`. Epic: EP-5.", "labels": ["story", "phase-1"] },
+        { "id": "EP5-S4", "title": "Commitment reminders", "prd_ref": "COM-4", "body": "T-3 days and due-date, via tenant-configured channel (email + in-app minimum for v1).\n\nPRD ref: `COM-4`. Epic: EP-5.", "labels": ["story", "phase-1"] },
+        { "id": "EP5-S5", "title": "Overdue escalation visibility", "prd_ref": "COM-5", "body": "Escalates to Head at +3 days, to Leadership at +10 days on Tier 1 stakeholders.\n\nPRD ref: `COM-5`. Epic: EP-5.", "labels": ["story", "phase-1"] },
+        { "id": "EP5-S6", "title": "Bidirectional commitments", "prd_ref": "COM-6", "body": "Commitments made *by* the stakeholder to the company, distinguished by direction.\n\nPRD ref: `COM-6`. Epic: EP-5.", "labels": ["story", "phase-1"] }
+      ]
+    },
+    {
+      "id": "EP-6",
+      "title": "EP-6: Escalations",
+      "phase_label": "phase-1",
+      "prd_ref": "§7.6",
+      "body": "**Goal:** surface problems immediately to the people who can act, without a game of telephone.\n\nPRD reference: §7.6 Escalations.\n\nStories are tracked as sub-issues of this epic.",
+      "labels": ["epic", "phase-1"],
+      "stories": [
+        { "id": "EP6-S1", "title": "Raise escalation", "prd_ref": "ESC-1", "body": "From an engagement or directly from a stakeholder, any user.\n\nPRD ref: `ESC-1`. Epic: EP-6.", "labels": ["story", "phase-1"] },
+        { "id": "EP6-S2", "title": "Escalation record", "prd_ref": "ESC-2", "body": "Reason, severity, requested intervention, raised-by, timestamp.\n\nPRD ref: `ESC-2`. Epic: EP-6.", "labels": ["story", "phase-1"] },
+        { "id": "EP6-S3", "title": "Escalation board", "prd_ref": "ESC-3", "body": "Ordered by severity then tier; shows stakeholder, tier badge, one-line reason, risk and sentiment chips.\n\nPRD ref: `ESC-3`. Epic: EP-6.", "labels": ["story", "phase-1"] },
+        { "id": "EP6-S4", "title": "Immediate dual visibility + nav badge counts", "prd_ref": "ESC-4", "body": "Visible to relevant Function Lead and Leadership simultaneously.\n\nPRD ref: `ESC-4`. Epic: EP-6.", "labels": ["story", "phase-1"] },
+        { "id": "EP6-S5", "title": "Resolution workflow", "prd_ref": "ESC-5", "body": "Requires resolution note, closes with timestamped record; history retained on the stakeholder permanently.\n\nPRD ref: `ESC-5`. Epic: EP-6.", "labels": ["story", "phase-1"] },
+        { "id": "EP6-S6", "title": "Ageing indicator", "prd_ref": "ESC-6", "body": "Escalations open >7 days visually distinguished.\n\nPRD ref: `ESC-6`. Epic: EP-6.", "labels": ["story", "phase-1"] }
+      ]
+    },
+    {
+      "id": "EP-7",
+      "title": "EP-7: Role dashboards",
+      "phase_label": "phase-1",
+      "prd_ref": "§7.7",
+      "body": "**Goal:** each role sees exactly what it needs and nothing else — this is a functional requirement, not visual polish.\n\nPRD reference: §7.7 Role dashboards.\n\nStories are tracked as sub-issues of this epic.",
+      "labels": ["epic", "phase-1"],
+      "stories": [
+        { "id": "EP7-S1", "title": "Field home", "prd_ref": "§7.7", "body": "Greeting, date, primary Log Engagement CTA, my-stakeholder count, request-a-stakeholder shortcut, my open commitments. Nothing else — answers exactly one question.\n\nPRD ref: §7.7. Epic: EP-7.", "labels": ["story", "phase-1"] },
+        { "id": "EP7-S2", "title": "Function Lead home", "prd_ref": "§7.7", "body": "Function badge, escalation count in greeting, four KPI tiles (high risk / open escalations / commitments due this week / supportive %), portfolio sentiment trend + mix, team panel (direct reports with stakeholder counts + open escalations), escalation board, upcoming commitments with owners, recent Tier 1 activity feed.\n\n**Depends on open question:** should Heads get cross-function read access (PRD §11.4)?\n\nPRD ref: §7.7. Epic: EP-7.", "labels": ["story", "phase-1"] },
+        { "id": "EP7-S3", "title": "Leadership home", "prd_ref": "§7.7", "body": "As Function Lead, org-wide; function badge replaced by Activity-by-function table (function, stakeholder count, high-risk count, escalation count, click-to-filter Directory); team panel replaced by cross-function rollup.\n\nPRD ref: §7.7. Epic: EP-7.", "labels": ["story", "phase-1"] },
+        { "id": "EP7-S4", "title": "Admin home", "prd_ref": "§7.7", "body": "Leadership view + Governance access.\n\nPRD ref: §7.7. Epic: EP-7.", "labels": ["story", "phase-1"] },
+        { "id": "EP7-S5", "title": "Activity feed", "prd_ref": "§7.7", "body": "Chronological cross-portfolio stream, badge-counted, role-scoped; Recent Tier 1 activity is a filtered view of the same stream.\n\nPRD ref: §7.7. Epic: EP-7.", "labels": ["story", "phase-1"] },
+        { "id": "EP7-S6", "title": "Progressive navigation by role", "prd_ref": "§6.1", "body": "Field user sees 3 nav items, admin sees 5 — deliberately near-empty for field, not a placeholder state.\n\nPRD ref: §6.1. Epic: EP-7.", "labels": ["story", "phase-1"] }
+      ]
+    },
+    {
+      "id": "EP-8",
+      "title": "EP-8: Governance & admin",
+      "phase_label": "phase-1-2",
+      "prd_ref": "§7.8",
+      "body": "**Goal:** give admins the tools to keep the registry clean and the system accountable, without engineering involvement.\n\nPRD reference: §7.8 Governance (Admin).\n\nStories are tracked as sub-issues of this epic.",
+      "labels": ["epic", "phase-1-2"],
+      "stories": [
+        { "id": "EP8-S1", "title": "User management", "prd_ref": "GOV-1", "body": "Invite, deactivate, role assignment, function assignment, reporting-line maintenance.\n\nPRD ref: `GOV-1`. Epic: EP-8.", "labels": ["story", "phase-1-2"] },
+        { "id": "EP8-S2", "title": "Taxonomy management", "prd_ref": "GOV-2", "body": "Functions, stakeholder types, tier definitions/cadences, sentiment labels, commitment priorities, risk-rule thresholds — all tenant-editable.\n\nPRD ref: `GOV-2`. Epic: EP-8.", "labels": ["story", "phase-1-2"] },
+        { "id": "EP8-S3", "title": "Registry hygiene queue", "prd_ref": "GOV-3", "body": "Pending stakeholder requests, duplicate candidates, unassigned stakeholders, stakeholders with deactivated owners, records going cold.\n\nPRD ref: `GOV-3`. Epic: EP-8.", "labels": ["story", "phase-1-2"] },
+        { "id": "EP8-S4", "title": "Immutable audit log", "prd_ref": "GOV-4", "body": "Covers auth, permission changes, tier changes, engagement creation/edits, escalation state changes, merges, exports, impersonation sessions; exportable; retention configurable, default 7 years.\n\nPRD ref: `GOV-4`. Epic: EP-8.", "labels": ["story", "phase-1-2"] },
+        { "id": "EP8-S5", "title": "Scoped export", "prd_ref": "GOV-5", "body": "CSV/XLSX of stakeholders, engagements, commitments, escalations, scoped to requester's permissions, every export audit-logged.\n\nPRD ref: `GOV-5`. Epic: EP-8.", "labels": ["story", "phase-1-2"] },
+        { "id": "EP8-S6", "title": "Offboarding reassignment queue", "prd_ref": "GOV-6", "body": "Deactivated user's stakeholders enter a mandatory reassignment queue — cannot be orphaned. This is the mechanism behind the core \"relationship equity doesn't walk out the door\" promise.\n\nPRD ref: `GOV-6`. Epic: EP-8.", "labels": ["story", "phase-1-2"] }
+      ]
+    },
+    {
+      "id": "EP-9",
+      "title": "EP-9: Notifications",
+      "phase_label": "phase-1-2",
+      "prd_ref": "§7.9",
+      "body": "**Goal:** the right nudge, on the right channel, without becoming noise.\n\nPRD reference: §7.9 Notifications.\n\nStories are tracked as sub-issues of this epic.",
+      "labels": ["epic", "phase-1-2"],
+      "stories": [
+        { "id": "EP9-S1", "title": "Per-user notification toggles", "prd_ref": "§7.9", "body": "All notification types individually toggleable per user.\n\nPRD ref: §7.9. Epic: EP-9.", "labels": ["story", "phase-1-2"] },
+        { "id": "EP9-S2", "title": "Admin-only escalation notification control", "prd_ref": "§7.9", "body": "Escalation notifications toggleable only by Admin (can't be silenced by an individual).\n\nPRD ref: §7.9. Epic: EP-9.", "labels": ["story", "phase-1-2"] },
+        { "id": "EP9-S3", "title": "Commitment reminders (notification delivery)", "prd_ref": "COM-4", "body": "T-3 and due-date reminders via tenant's configured channel. Shared with EP-5 (COM-4) — this story covers the notification-delivery side.\n\nPRD ref: `COM-4`. Epic: EP-9.", "labels": ["story", "phase-1-2"] },
+        { "id": "EP9-S4", "title": "Owner notification on log-on-behalf-of", "prd_ref": "ENG-11", "body": "Shared with EP-3 (ENG-11) — this story covers the notification-delivery side.\n\nPRD ref: `ENG-11`. Epic: EP-9.", "labels": ["story", "phase-1-2"] },
+        { "id": "EP9-S5", "title": "v1.1 candidate channels: Teams & WhatsApp Business", "prd_ref": "COM-4", "body": "Flag as fast-follow given field-user reality in this market, not v1 scope.\n\nPRD ref: `COM-4`. Epic: EP-9.", "labels": ["story", "phase-2"] }
+      ]
+    },
+    {
+      "id": "EP-10",
+      "title": "EP-10: Mobile & offline",
+      "phase_label": "phase-1-2",
+      "prd_ref": "§7.10",
+      "body": "**Goal:** the field experience has to work on a phone, on 3G, in a car park.\n\nPRD reference: §7.10 Mobile.\n\nStories are tracked as sub-issues of this epic.",
+      "labels": ["epic", "phase-1-2"],
+      "stories": [
+        { "id": "EP10-S1", "title": "Responsive web + installable PWA", "prd_ref": "MOB-1", "body": "v1 delivery mechanism, offline capture.\n\nPRD ref: `MOB-1`. Epic: EP-10.", "labels": ["story", "phase-1-2"] },
+        { "id": "EP10-S2", "title": "Mobile-first field / desktop-first leadership", "prd_ref": "MOB-2", "body": "Explicit design direction split by role.\n\nPRD ref: `MOB-2`. Epic: EP-10.", "labels": ["story", "phase-1-2"] },
+        { "id": "EP10-S3", "title": "Offline coverage for core field actions", "prd_ref": "MOB-3", "body": "Viewing my stakeholders, viewing my commitments, creating an engagement, creating a commitment — all work offline; sync on reconnect with conflict surfacing.\n\nPRD ref: `MOB-3`. Epic: EP-10.", "labels": ["story", "phase-1-2"] },
+        { "id": "EP10-S4", "title": "3G performance budget", "prd_ref": "MOB-4", "body": "Interactive within 3s, log screen within 1s of tap.\n\nPRD ref: `MOB-4`. Epic: EP-10.", "labels": ["story", "phase-1-2"] },
+        { "id": "EP10-S5", "title": "Native app decision gate", "prd_ref": "MOB-5", "body": "v2 decision, contingent on PWA offline reliability and push notifications proving sufficient in the Unilever pilot — not a story to build yet, a decision checkpoint.\n\nPRD ref: `MOB-5`. Epic: EP-10.", "labels": ["story", "phase-2"] }
+      ]
+    },
+    {
+      "id": "EP-11",
+      "title": "EP-11: Non-functional / platform quality",
+      "phase_label": "cross-cutting",
+      "prd_ref": "§8",
+      "body": "**Goal:** the operational guarantees that make this deployable to an enterprise tenant. Cross-cutting — apply to every epic above rather than shipping as a separate feature.\n\nPRD reference: §8 Non-functional requirements.\n\nStories are tracked as sub-issues of this epic.",
+      "labels": ["epic", "cross-cutting"],
+      "stories": [
+        { "id": "EP11-S1", "title": "Performance budgets", "prd_ref": "§8", "body": "p95 dashboard <2s broadband / <4s on 3G; engagement submit acknowledged <500ms via optimistic UI + background sync.\n\nPRD ref: §8. Epic: EP-11.", "labels": ["story", "cross-cutting"] },
+        { "id": "EP11-S2", "title": "Availability targets", "prd_ref": "§8", "body": "99.5% monthly uptime v1, 99.9% once a second enterprise tenant is live; planned maintenance windows outside 06:00–20:00 tenant-local.\n\nPRD ref: §8. Epic: EP-11.", "labels": ["story", "cross-cutting"] },
+        { "id": "EP11-S3", "title": "Scale design targets", "prd_ref": "§8", "body": "500 tenants, 50,000 users, 5,000 stakeholders and 100,000 engagements per tenant — single well-indexed relational DB, explicitly do not over-engineer beyond this.\n\nPRD ref: §8. Epic: EP-11.", "labels": ["story", "cross-cutting"] },
+        { "id": "EP11-S4", "title": "Security baseline", "prd_ref": "§8", "body": "TLS 1.3 in transit, AES-256 at rest with per-tenant keys for free text (ties to `TEN-3`), encrypted tested backups, RPO 1h / RTO 4h, annual pentest, SOC 2 Type II on roadmap.\n\nPRD ref: §8. Epic: EP-11.", "labels": ["story", "cross-cutting"] },
+        { "id": "EP11-S5", "title": "Accessibility (WCAG 2.2 AA)", "prd_ref": "§8", "body": "Specifically fix sentiment/risk color-only encoding (needs shape/label reinforcement) and add an accessible tabular alternative to the sentiment trend bar chart.\n\nPRD ref: §8. Epic: EP-11.", "labels": ["story", "cross-cutting"] },
+        { "id": "EP11-S6", "title": "Localization scaffolding", "prd_ref": "§8", "body": "Full i18n scaffolding from day one even though v1 ships en-GB only; date/number/timezone formatting per tenant locale.\n\nPRD ref: §8. Epic: EP-11.", "labels": ["story", "cross-cutting"] },
+        { "id": "EP11-S7", "title": "Browser/OS support matrix", "prd_ref": "§8", "body": "Evergreen Chrome/Edge/Safari/Firefox; iOS 16+ and Android 10+ mobile browsers.\n\nPRD ref: §8. Epic: EP-11.", "labels": ["story", "cross-cutting"] }
+      ]
+    },
+    {
+      "id": "EP-12",
+      "title": "EP-12: Data protection & anti-bribery compliance",
+      "phase_label": "cross-cutting",
+      "prd_ref": "§11.2, §11.3",
+      "body": "**Goal:** the product's subject matter — tracking engagement with regulators and officials in a high-risk jurisdiction — makes this epic load-bearing, not a checkbox. Start in Phase 0/1, not bolted on later.\n\nPRD reference: §11.2 Data protection, §11.3 Anti-bribery and corruption.\n\nStories are tracked as sub-issues of this epic.",
+      "labels": ["epic", "cross-cutting"],
+      "stories": [
+        { "id": "EP12-S1", "title": "Design to NDPA + GDPR-grade standard", "prd_ref": "DP-1", "body": "Nigeria Data Protection Act 2023 applies to Unilever Nigeria; design to the stricter GDPR standard given likely global requirement.\n\nPRD ref: `DP-1`. Epic: EP-12.", "labels": ["story", "phase-0"] },
+        { "id": "EP12-S2", "title": "Contact retention schedule", "prd_ref": "DP-2", "body": "Documented lawful basis + retention (recommend 24 months post-last-engagement for individuals; organization-level history retained longer).\n\nPRD ref: `DP-2`. Epic: EP-12.", "labels": ["story", "phase-1"] },
+        { "id": "EP12-S3", "title": "Subject access & erasure workflow", "prd_ref": "DP-3", "body": "Locate and redact personal data about a named individual without destroying organizational engagement history.\n\nPRD ref: `DP-3`. Epic: EP-12.", "labels": ["story", "phase-1"] },
+        { "id": "EP12-S4", "title": "Notes-discipline guidance", "prd_ref": "DP-4", "body": "In-field guidance text + mandatory training element (\"record what was discussed and agreed; avoid speculation about individuals\").\n\nPRD ref: `DP-4`. Epic: EP-12.", "labels": ["story", "phase-1"] },
+        { "id": "EP12-S5", "title": "Special-category data guard", "prd_ref": "DP-5", "body": "No storage of health/religion/political/ethnicity data on contacts; consider automated warning on entry of likely special-category terms.\n\nPRD ref: `DP-5`. Epic: EP-12.", "labels": ["story", "phase-1"] },
+        { "id": "EP12-S6", "title": "No free-text bribery path", "prd_ref": "ABC-1", "body": "Never provide a free-text field where recording an improper payment is the path of least resistance; if gifts/hospitality are tracked, build a structured register with value thresholds and approval routing, or omit entirely and link to tenant's existing compliance system — no half-version.\n\nPRD ref: `ABC-1`. Epic: EP-12.", "labels": ["story", "phase-1"] },
+        { "id": "EP12-S7", "title": "Legal & Compliance pilot involvement", "prd_ref": "ABC-2", "body": "Process/stakeholder requirement — Legal & Compliance function lead included in rollout design, not just as a recipient.\n\nPRD ref: `ABC-2`. Epic: EP-12.", "labels": ["story", "phase-1"] },
+        { "id": "EP12-S8", "title": "Compliance-concern escalation category", "prd_ref": "ABC-3", "body": "Escalation reason routes directly to Legal, bypassing normal function hierarchy.\n\nPRD ref: `ABC-3`. Epic: EP-12.", "labels": ["story", "phase-1"] },
+        { "id": "EP12-S9", "title": "Tamper-evident audit trail", "prd_ref": "ABC-4", "body": "Audit log sufficient to demonstrate notes were not retrospectively altered (ties to `GOV-4`) — the property that gives the record evidentiary weight.\n\nPRD ref: `ABC-4`. Epic: EP-12.", "labels": ["story", "phase-1"] }
+      ]
+    },
+    {
+      "id": "EP-13",
+      "title": "EP-13: Multi-tenant self-serve onboarding",
+      "phase_label": "phase-3",
+      "prd_ref": "§5.3",
+      "body": "**Goal:** a second tenant can be onboarded without engineering involvement — this is what makes the product a platform rather than a bespoke Unilever build.\n\nPRD reference: §5.3 Tenant onboarding.\n\nStories are tracked as sub-issues of this epic.",
+      "labels": ["epic", "phase-3"],
+      "stories": [
+        { "id": "EP13-S1", "title": "Platform admin tenant creation", "prd_ref": "§5.3", "body": "Create tenant, set plan and residency, issue tenant-admin invite.\n\nPRD ref: §5.3. Epic: EP-13.", "labels": ["story", "phase-3"] },
+        { "id": "EP13-S2", "title": "Guided tenant admin setup", "prd_ref": "§5.3", "body": "Branding, SSO connection, functions, stakeholder types, tier definitions, sentiment labels.\n\nPRD ref: §5.3. Epic: EP-13.", "labels": ["story", "phase-3"] },
+        { "id": "EP13-S3", "title": "Bulk import tooling", "prd_ref": "§5.3", "body": "CSV/SCIM user import; CSV stakeholder import with dedupe preview (reuses `REG-3` dedupe logic).\n\nPRD ref: §5.3. Epic: EP-13.", "labels": ["story", "phase-3"] },
+        { "id": "EP13-S4", "title": "Phased function activation", "prd_ref": "§5.3", "body": "Pilot function activated first, remaining functions enabled in sequence.\n\nPRD ref: §5.3. Epic: EP-13.", "labels": ["story", "phase-3"] },
+        { "id": "EP13-S5", "title": "Onboarding SLA target: 10 working days", "prd_ref": "§5.3", "body": "10 working days from contract to first live engagement logged — treat as the acceptance metric for this whole epic.\n\nPRD ref: §5.3. Epic: EP-13.", "labels": ["story", "phase-3"] }
+      ]
+    },
+    {
+      "id": "EP-14",
+      "title": "EP-14: Phase 4 candidates (parking lot)",
+      "phase_label": "phase-4",
+      "prd_ref": "§10",
+      "body": "**Goal:** explicitly deferred per PRD §10, contingent on pilot evidence. Do not pull into earlier phases without a deliberate re-prioritization decision.\n\nPRD reference: §10 Release plan, Phase 4.\n\nSub-issues below are unscheduled candidates, not committed scope.",
+      "labels": ["epic", "phase-4"],
+      "stories": [
+        { "id": "EP14-S1", "title": "NLP-assisted sentiment suggestion from engagement notes", "prd_ref": "§10", "body": "Deferred candidate. Not in v1 scope — v1 sentiment is human-asserted only (see PRD §3.2 non-goals).\n\nEpic: EP-14.", "labels": ["story", "phase-4"] },
+        { "id": "EP14-S2", "title": "Teams and WhatsApp Business logging channels", "prd_ref": "§10", "body": "Deferred candidate beyond the v1.1 reminder-channel fast-follow in EP-9.\n\nEpic: EP-14.", "labels": ["story", "phase-4"] },
+        { "id": "EP14-S3", "title": "Calendar integration to prompt logging after external meetings", "prd_ref": "§10", "body": "Deferred candidate.\n\nEpic: EP-14.", "labels": ["story", "phase-4"] },
+        { "id": "EP14-S4", "title": "Stakeholder influence-network mapping", "prd_ref": "§10", "body": "Deferred candidate.\n\nEpic: EP-14.", "labels": ["story", "phase-4"] },
+        { "id": "EP14-S5", "title": "Board-pack report generation", "prd_ref": "§10", "body": "Deferred candidate.\n\nEpic: EP-14.", "labels": ["story", "phase-4"] },
+        { "id": "EP14-S6", "title": "Native mobile apps", "prd_ref": "§10", "body": "Deferred candidate — gated on the EP10-S5 PWA decision checkpoint.\n\nEpic: EP-14.", "labels": ["story", "phase-4"] },
+        { "id": "EP14-S7", "title": "Gifts-and-hospitality register", "prd_ref": "§11.3", "body": "Deferred candidate — only build as the structured register described in `ABC-1`; never as a free-text field.\n\nEpic: EP-14.", "labels": ["story", "phase-4"] }
+      ]
+    }
+  ]
+}
