@@ -84,3 +84,18 @@ descriptions) will call it.
 [`TenantKeyService.destroy`](src/encryption/tenant-key.service.ts) drops the
 tenant's wrapped DEK and tombstones it; every value ever encrypted under that DEK
 becomes permanently unrecoverable, with no need to locate and overwrite each row.
+
+### Roles & permissions (EP1-S10 / §4.1)
+
+Four roles — Field, Function Lead, Leadership, Admin — decoupled from job title
+and assigned per user. The [`PERMISSION_MATRIX`](src/authz/permission.ts) is
+cumulative (Admin ⊇ Leadership ⊇ Function Lead ⊇ Field). Requests carry a
+principal ([`PrincipalMiddleware`](src/authz/principal.middleware.ts) →
+[`PrincipalContext`](src/authz/principal-context.ts)), and routes are gated with
+[`@RequirePermissions`](src/authz/require-permissions.decorator.ts), enforced by a
+global [`PermissionsGuard`](src/authz/permissions.guard.ts) (no permissions
+declared → allowed; missing principal → 401; insufficient role → 403).
+
+> The principal is currently read from `x-user-*` headers as a **seam** — a
+> stand-in for verified SSO claims. AUTH-1/AUTH-2 (EP1-S5) replaces that source;
+> the matrix and guard are what this story delivers.

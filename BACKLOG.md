@@ -29,11 +29,9 @@ Open questions in PRD §11.4 gate specific epics — flagged inline below where 
 
 **What this is:** anything we talk about and decide *not* to build right now lands here so it isn't lost. Each item has a date and a one-line note on where it came from. When an item graduates into committed work, it becomes a GitHub issue (and gets removed from this list). Decisions about *how* we build go in [DECISIONS.md](DECISIONS.md); this list is for *work we might do later*.
 
-_(Nothing parked yet — this section fills up as we go.)_
-
 | Added | Item | Context / why parked |
 |---|---|---|
-| — | — | — |
+| 2026-08-10 | **Authorize the `/platform` analytics routes** | The cross-tenant platform-operator endpoints (`src/platform-analytics`) are excluded from tenant middleware and currently have NO authz. Platform-operator identity is a separate plane from tenant roles (EP1-S10 matrix); it needs the platform-admin identity from AUTH (EP1-S5). Add a platform-admin guard once that identity exists. |
 
 ---
 

@@ -25,6 +25,12 @@ Newest decisions go at the **top** of the "Decisions" list. Open questions live 
 
 ## Decisions
 
+### D-0010 — RBAC: cumulative role matrix, guard + ambient principal
+**What we decided (§4.1):** Four roles (Field, Function Lead, Leadership, Admin) with a cumulative default permission matrix (each role ⊇ the one below). Enforcement is a global NestJS `PermissionsGuard` reading a `@RequirePermissions` decorator; the actor is an ambient `PrincipalContext` (AsyncLocalStorage), set by `PrincipalMiddleware`. Role is assigned per user and decoupled from job title. The permission list was reverse-engineered from the PRD's scattered rules because the §4.1 matrix table did not extract from the DOCX (it was an image).
+**Why:** Mirrors the dashboards in §7.7 ("Leadership as Function Lead but org-wide", "Admin = Leadership plus Governance"), so a cumulative matrix is the natural model. An ambient principal + global guard keeps authorization out of call sites, consistent with how TenantContext handles tenancy. Data scope (own/function/org) is modelled as distinct permissions rather than baked into one, so scope stays explicit.
+**Seam:** the principal is read from `x-user-*` headers for now — a stand-in for verified SSO claims (AUTH-1/AUTH-2, EP1-S5). These headers are NOT yet a trust boundary; the matrix + guard are the deliverable.
+**Status:** ✅ Active. 18 unit tests + a 5-case HTTP e2e (Field forbidden from direct create, Function Lead allowed, 401 unauthenticated, 400 no-tenant).
+
 ### D-0009 — Per-tenant encryption via envelope encryption + crypto-shredding
 **What we decided (TEN-3):** Free-text is encrypted at rest with AES-256-GCM under a per-tenant Data Encryption Key (DEK). Each DEK is stored wrapped by a master KEK (KMS in production, `MASTER_ENCRYPTION_KEY` env in dev) in `tenant_encryption_keys`. Application-layer encryption via a `TenantFieldCrypto` seam (not Postgres `pgcrypto`). Contractual deletion is **crypto-shredding**: destroying the tenant's wrapped DEK makes all their ciphertext permanently unrecoverable.
 **Why:** Per-tenant keys + key-destruction-as-deletion are far cleaner at the application layer than in-database column encryption — one delete of a wrapped key shreds a tenant's data without touching every ciphertext row, and keys never need to reach the database in unwrapped form. AES-256-GCM is authenticated, so wrong-key/tampered reads fail loudly (which is what makes shredding verifiable). The DEK is cached in-process after first unwrap.
