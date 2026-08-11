@@ -23,6 +23,15 @@ function signToken(email: string, extra: Record<string, unknown> = {}, secret = 
     .sign(new TextEncoder().encode(secret));
 }
 
+function signTokenAged(email: string, hoursAgo: number) {
+  return new SignJWT({ sub: 'sub-1', email })
+    .setProtectedHeader({ alg: 'HS256' })
+    .setAudience('authenticated')
+    .setIssuedAt(Math.floor(Date.now() / 1000) - hoursAgo * 3600)
+    .setExpirationTime('30d')
+    .sign(new TextEncoder().encode(SECRET));
+}
+
 describe('Supabase auth (e2e)', () => {
   let app: INestApplication;
 
@@ -110,5 +119,23 @@ describe('Supabase auth (e2e)', () => {
       .set('Authorization', `Bearer ${token}`)
       .send({ name: 'New Agency' })
       .expect(201);
+  });
+
+  it('enforces the desktop session timeout at 8h (AUTH-4)', async () => {
+    const token = await signTokenAged('ada@acme.com', 9);
+    await request(app.getHttpServer())
+      .get('/stakeholders')
+      .set('Authorization', `Bearer ${token}`)
+      .set('x-client-type', 'desktop')
+      .expect(401);
+  });
+
+  it('allows the same 9h-old session on mobile (12h timeout)', async () => {
+    const token = await signTokenAged('ada@acme.com', 9);
+    await request(app.getHttpServer())
+      .get('/stakeholders')
+      .set('Authorization', `Bearer ${token}`)
+      .set('x-client-type', 'mobile')
+      .expect(200);
   });
 });

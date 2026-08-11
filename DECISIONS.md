@@ -25,6 +25,12 @@ Newest decisions go at the **top** of the "Decisions" list. Open questions live 
 
 ## Decisions
 
+### D-0015 — Session timeout enforced per tenant + client type against token start
+**What we decided (AUTH-4):** Each tenant configures a session timeout per client type (`tenant_auth_settings`, defaults 12h mobile / 8h desktop). Client type comes from an `x-client-type` header or User-Agent. The resolver rejects a session once `now − sessionStart > timeout`, where `sessionStart` is a configurable stable claim (`authTimeClaim`) or falls back to the token's `iat`. `/auth/me` returns `sessionExpiresAt`.
+**Why:** Supabase mints/refreshes the tokens, so our layer enforces the app-side cap. Using `iat` alone measures token age (~1h with refresh), not session age — so a stable `authTimeClaim` (added via a Supabase Auth Hook) is the correct source for a true absolute cap; we default to `iat` and skip enforcement when no start time exists rather than reject a well-formed token. This keeps the mechanism tenant-configurable per the PRD while being honest about the Supabase interaction.
+**Config (user-owned):** optionally add a stable session-start custom claim in Supabase and set `auth_time_claim`; otherwise Supabase's own session time-box/inactivity settings back this up.
+**Status:** ✅ Active. 13 tests (timeout math incl. mobile-vs-desktop, resolver rejection) + e2e proving a 9h-old session is rejected on desktop but accepted on mobile.
+
 ### D-0014 — Audit log is append-only + hash-chained for tamper-evidence
 **What we decided (EP1-S12 skeleton; ABC-4):** The audit log is append-only with two independent tamper-resistance layers: (1) a per-tenant SHA-256 hash chain (`hash = SHA256(prevHash + canonical(event))`) that `verifyIntegrity` recomputes to detect any alteration/deletion/reordering, and (2) a database trigger that blocks `UPDATE`/`DELETE`. `AuditService.record` is the single append API; concrete write-sites are added by their own stories (impersonation #9, tier changes, engagement edits, exports, GOV-1 user/permission changes), and GOV-4 extends this with retention, export and scoped reads.
 **Why:** ABC-4 requires the log to *demonstrate* records were not retrospectively altered — that evidentiary property needs cryptographic linkage, not just access control. The hash chain gives detectability even if someone bypasses the trigger (proven in `verify:audit`); the trigger gives plain immutability at the DB. Building it as a skeleton now means every later governance/impersonation story writes to one consistent, verifiable log.

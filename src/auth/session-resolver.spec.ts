@@ -102,4 +102,32 @@ describe('SessionResolver', () => {
       expect(session.role).toBe(Role.FUNCTION_LEAD);
     });
   });
+
+  describe('AUTH-4 session timeout', () => {
+    const tokenIssuedHoursAgo = (hours: number) =>
+      new SignJWT({ sub: 'sub-1', email: 'ada@acme.com' })
+        .setProtectedHeader({ alg: 'HS256' })
+        .setIssuer(ISSUER)
+        .setAudience('authenticated')
+        .setIssuedAt(Math.floor(Date.now() / 1000) - hours * 3600)
+        .setExpirationTime('30d')
+        .sign(SECRET);
+
+    it('rejects a session past the desktop timeout (8h default)', async () => {
+      await expect(resolver(tenants, users).resolve(await tokenIssuedHoursAgo(9), 'desktop')).rejects.toThrow(
+        /timed out/,
+      );
+    });
+
+    it('accepts the same age on mobile (12h default) and reports expiry', async () => {
+      const session = await resolver(tenants, users).resolve(await tokenIssuedHoursAgo(9), 'mobile');
+      expect(session.role).toBe(Role.FUNCTION_LEAD);
+      expect(session.sessionExpiresAt).toBeInstanceOf(Date);
+    });
+
+    it('accepts a fresh session', async () => {
+      const session = await resolver(tenants, users).resolve(await tokenIssuedHoursAgo(0), 'desktop');
+      expect(session.sessionExpiresAt).toBeInstanceOf(Date);
+    });
+  });
 });

@@ -33,11 +33,14 @@ model Tenant {
 /// (AUTH-2): whether IdP claims or the SET user record wins, and which JWT claim
 /// carries each attribute.
 model TenantAuthSettings {
-  tenantId       String  @id @map("tenant_id") @db.Uuid
-  precedence     String  @default("record_first") // 'record_first' | 'idp_first'
-  roleClaim      String? @map("role_claim")
-  functionClaim  String? @map("function_claim")
-  reportsToClaim String? @map("reports_to_claim")
+  tenantId                    String  @id @map("tenant_id") @db.Uuid
+  precedence                  String  @default("record_first") // 'record_first' | 'idp_first'
+  roleClaim                   String? @map("role_claim")
+  functionClaim               String? @map("function_claim")
+  reportsToClaim              String? @map("reports_to_claim")
+  authTimeClaim               String? @map("auth_time_claim")
+  sessionTimeoutMobileMinutes Int     @default(720) @map("session_timeout_mobile_minutes")
+  sessionTimeoutDesktopMinutes Int    @default(480) @map("session_timeout_desktop_minutes")
 
   tenant Tenant @relation(fields: [tenantId], references: [id])
 

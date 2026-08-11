@@ -1,6 +1,6 @@
 import { Injectable, NestMiddleware } from '@nestjs/common';
 import { NextFunction, Request, Response } from 'express';
-import { extractBearerToken, setSession } from './session';
+import { detectClientType, extractBearerToken, setSession } from './session';
 import { SessionResolver } from './session-resolver';
 
 /**
@@ -22,7 +22,7 @@ export class SupabaseSessionMiddleware implements NestMiddleware {
       return;
     }
     try {
-      setSession(req, await this.resolver.resolve(token));
+      setSession(req, await this.resolver.resolve(token, detectClientType(req)));
       next();
     } catch (err) {
       next(err);

@@ -87,6 +87,11 @@ export class PrismaAuthSettingsDirectory implements AuthSettingsDirectory {
       roleClaim: settings.roleClaim ?? undefined,
       functionClaim: settings.functionClaim ?? undefined,
       reportsToClaim: settings.reportsToClaim ?? undefined,
+      sessionTimeout: {
+        mobileMinutes: settings.sessionTimeoutMobileMinutes,
+        desktopMinutes: settings.sessionTimeoutDesktopMinutes,
+        authTimeClaim: settings.authTimeClaim ?? undefined,
+      },
     };
   }
 }

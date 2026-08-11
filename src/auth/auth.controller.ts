@@ -15,6 +15,7 @@ export class AuthController {
       functionId: session.functionId,
       reportsToId: session.reportsToId,
       tenant: session.tenantSlug,
+      sessionExpiresAt: session.sessionExpiresAt,
     };
   }
 }

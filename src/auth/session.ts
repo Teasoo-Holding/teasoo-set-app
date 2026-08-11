@@ -1,5 +1,6 @@
 import type { Request } from 'express';
 import { Role } from '../authz/role';
+import { ClientType } from './session-timeout';
 
 /** The verified session derived from a Supabase token. */
 export interface AppSession {
@@ -8,6 +9,8 @@ export interface AppSession {
   role: Role;
   functionId?: string;
   reportsToId?: string;
+  /** When this session lapses under the tenant's per-client timeout (AUTH-4). */
+  sessionExpiresAt?: Date;
 }
 
 const SESSION_KEY = Symbol('app.session');
@@ -26,6 +29,14 @@ export function extractBearerToken(req: Request): string | undefined {
   if (!header) return undefined;
   const [scheme, value] = header.split(' ');
   return scheme?.toLowerCase() === 'bearer' && value ? value.trim() : undefined;
+}
+
+/** Which client the request came from, for per-client session timeouts (AUTH-4). */
+export function detectClientType(req: Request): ClientType {
+  const explicit = req.header('x-client-type')?.trim().toLowerCase();
+  if (explicit === 'mobile' || explicit === 'desktop') return explicit;
+  const ua = req.header('user-agent') ?? '';
+  return /Mobi|Android|iPhone|iPad|iPod/i.test(ua) ? 'mobile' : 'desktop';
 }
 
 /** The email's domain, lowercased, or undefined if malformed. */
