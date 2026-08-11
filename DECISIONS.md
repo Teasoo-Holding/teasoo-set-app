@@ -25,6 +25,11 @@ Newest decisions go at the **top** of the "Decisions" list. Open questions live 
 
 ## Decisions
 
+### D-0016 — Impersonation via a signed, audited, read-only grant
+**What we decided (AUTH-5):** A Tenant Admin starts "view as" through `POST /auth/impersonate` (permission-gated on `IMPERSONATE`, audited via the EP1-S12 log). It returns a short-lived grant (JWT signed with `IMPERSONATION_SECRET`, bound to both the acting admin and the tenant). The client sends the grant back via the `x-impersonation-grant` header; `ImpersonationMiddleware` verifies it against the real admin session and swaps in a **read-only** session for the target, tagged with the impersonator. A global `ReadOnlyGuard` blocks mutating methods; `/auth/me` exposes the impersonation banner state.
+**Why:** Making impersonation flow through a signed grant means it cannot happen without the permission-gated, audited start — there is no way to forge "act as" from a header alone. Read-only is enforced centrally rather than per-endpoint. This is the first real writer to the audit log skeleton, closing that loop.
+**Status:** ✅ Active. 4 signer unit tests + e2e (admin start audited, reads as target, writes 403, banner-flagged, forged grant 401).
+
 ### D-0015 — Session timeout enforced per tenant + client type against token start
 **What we decided (AUTH-4):** Each tenant configures a session timeout per client type (`tenant_auth_settings`, defaults 12h mobile / 8h desktop). Client type comes from an `x-client-type` header or User-Agent. The resolver rejects a session once `now − sessionStart > timeout`, where `sessionStart` is a configurable stable claim (`authTimeClaim`) or falls back to the token's `iat`. `/auth/me` returns `sessionExpiresAt`.
 **Why:** Supabase mints/refreshes the tokens, so our layer enforces the app-side cap. Using `iat` alone measures token age (~1h with refresh), not session age — so a stable `authTimeClaim` (added via a Supabase Auth Hook) is the correct source for a true absolute cap; we default to `iat` and skip enforcement when no start time exists rather than reject a well-formed token. This keeps the mechanism tenant-configurable per the PRD while being honest about the Supabase interaction.

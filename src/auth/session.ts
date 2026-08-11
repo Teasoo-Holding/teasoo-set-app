@@ -11,6 +11,10 @@ export interface AppSession {
   reportsToId?: string;
   /** When this session lapses under the tenant's per-client timeout (AUTH-4). */
   sessionExpiresAt?: Date;
+  /** Set when an admin is impersonating this user (AUTH-5): the acting admin's id. */
+  impersonatorUserId?: string;
+  /** Impersonation sessions are read-only. */
+  readOnly?: boolean;
 }
 
 const SESSION_KEY = Symbol('app.session');

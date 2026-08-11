@@ -1,6 +1,7 @@
 import { MiddlewareConsumer, Module, NestModule, RequestMethod } from '@nestjs/common';
 import { AuditModule } from './audit/audit.module';
 import { AuthModule } from './auth/auth.module';
+import { ImpersonationMiddleware } from './auth/impersonation.middleware';
 import { SupabaseSessionMiddleware } from './auth/supabase-session.middleware';
 import { AuthzModule } from './authz/authz.module';
 import { PrincipalMiddleware } from './authz/principal.middleware';
@@ -29,22 +30,31 @@ export class AppModule implements NestModule {
     // platform/health endpoints. This attaches the verified session for the
     // tenant/principal middlewares and the /auth endpoints to read.
     consumer
-      .apply(SupabaseSessionMiddleware)
+      .apply(SupabaseSessionMiddleware, ImpersonationMiddleware)
       .exclude(
         { path: 'platform/(.*)', method: RequestMethod.ALL },
         { path: 'health', method: RequestMethod.ALL },
       )
       .forRoutes('*');
 
-    // Resolve tenant (TEN-1) and principal (§4.1) for tenant-scoped routes only —
-    // both prefer the verified session over the dev headers. The /auth endpoints
-    // are pre-tenant and read the session directly.
+    // Tenant context (TEN-1) is for tenant-scoped routes only — the /auth
+    // endpoints are pre-tenant.
     consumer
-      .apply(TenantContextMiddleware, PrincipalMiddleware)
+      .apply(TenantContextMiddleware)
       .exclude(
         { path: 'platform/(.*)', method: RequestMethod.ALL },
         { path: 'health', method: RequestMethod.ALL },
         { path: 'auth/(.*)', method: RequestMethod.ALL },
+      )
+      .forRoutes('*');
+
+    // Principal (§4.1) is resolved for /auth too, so permission-gated auth
+    // endpoints (e.g. POST /auth/impersonate) can be authorized.
+    consumer
+      .apply(PrincipalMiddleware)
+      .exclude(
+        { path: 'platform/(.*)', method: RequestMethod.ALL },
+        { path: 'health', method: RequestMethod.ALL },
       )
       .forRoutes('*');
   }

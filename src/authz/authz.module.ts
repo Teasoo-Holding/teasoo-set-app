@@ -1,8 +1,9 @@
-import { Module } from '@nestjs/common';
+import { Global, Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { PermissionService } from './permission.service';
 import { PermissionsGuard } from './permissions.guard';
 
+@Global()
 @Module({
   providers: [
     PermissionService,

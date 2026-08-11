@@ -125,6 +125,15 @@ always falls back to the record. Reporting line (`reports_to`) resolves the same
 way — the authoritative source per tenant (HRIS / IdP groups / manual) is a
 config choice, which is what OQ-2 was about.
 
+### Impersonation — "view as" (EP1-S9 / AUTH-5)
+
+A Tenant Admin starts impersonation via `POST /auth/impersonate` (permission-gated
++ audited), which returns a short-lived signed grant. The client returns it via
+`x-impersonation-grant`; [`ImpersonationMiddleware`](src/auth/impersonation.middleware.ts)
+swaps in a **read-only** session for the target user, tagged with the acting
+admin. A global [`ReadOnlyGuard`](src/auth/read-only.guard.ts) blocks writes, and
+`/auth/me` reports the impersonation banner state.
+
 ### Audit log (EP1-S12 skeleton; GOV-4 extends)
 
 An append-only, tamper-evident event log. [`AuditService.record`](src/audit/audit.service.ts)

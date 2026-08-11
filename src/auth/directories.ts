@@ -11,14 +11,16 @@ export interface DirectoryUser {
   status: string;
 }
 
-/** Email-domain → tenant slug. */
+/** Email-domain → tenant slug, and slug → tenant id. */
 export interface TenantDirectory {
   findTenantSlugByDomain(domain: string): Promise<string | null>;
+  findTenantIdBySlug(slug: string): Promise<string | null>;
 }
 
-/** Tenant + email → the user's authorization attributes. */
+/** Tenant + email/id → the user's authorization attributes. */
 export interface UserDirectory {
   findUser(tenantSlug: string, email: string): Promise<DirectoryUser | null>;
+  findUserById(tenantSlug: string, userId: string): Promise<DirectoryUser | null>;
 }
 
 /** Tenant → its identity-resolution policy (AUTH-2). */
@@ -41,6 +43,11 @@ export class PrismaTenantDirectory implements TenantDirectory {
     });
     return row?.tenant.slug ?? null;
   }
+
+  async findTenantIdBySlug(slug: string): Promise<string | null> {
+    const tenant = await this.prisma.client.tenant.findUnique({ where: { slug } });
+    return tenant?.id ?? null;
+  }
 }
 
 @Injectable()
@@ -50,15 +57,29 @@ export class PrismaUserDirectory implements UserDirectory {
   async findUser(tenantSlug: string, email: string): Promise<DirectoryUser | null> {
     const tenant = await this.prisma.client.tenant.findUnique({ where: { slug: tenantSlug } });
     if (!tenant) return null;
-
     const user = await this.prisma.client.user.findUnique({
       where: { tenantId_email: { tenantId: tenant.id, email } },
     });
-    if (!user) return null;
+    return this.toDirectoryUser(user);
+  }
 
+  async findUserById(tenantSlug: string, userId: string): Promise<DirectoryUser | null> {
+    const tenant = await this.prisma.client.tenant.findUnique({ where: { slug: tenantSlug } });
+    if (!tenant) return null;
+    const user = await this.prisma.client.user.findFirst({ where: { id: userId, tenantId: tenant.id } });
+    return this.toDirectoryUser(user);
+  }
+
+  private toDirectoryUser(user: {
+    id: string;
+    role: string;
+    functionId: string | null;
+    reportsToId: string | null;
+    status: string;
+  } | null): DirectoryUser | null {
+    if (!user) return null;
     const role = parseRole(user.role);
     if (!role) return null; // an unmappable role must not authorize anything
-
     return {
       userId: user.id,
       role,

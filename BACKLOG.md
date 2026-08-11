@@ -32,6 +32,7 @@ Open questions in PRD §11.4 gate specific epics — flagged inline below where 
 | Added | Item | Context / why parked |
 |---|---|---|
 | 2026-08-10 | **Authorize the `/platform` analytics routes** | The cross-tenant platform-operator endpoints (`src/platform-analytics`) are excluded from tenant middleware and currently have NO authz. Platform-operator identity is a separate plane from tenant roles (EP1-S10 matrix); it needs the platform-admin identity from AUTH (EP1-S5). Add a platform-admin guard once that identity exists. |
+| 2026-08-10 | **Fix TenantContext to carry the tenant UUID, not the slug (needed before EP-2's DB path)** | `TenantContext` currently stores the tenant *slug* (from the session/header), but `PrismaService.withTenant` sets the `app.current_tenant_id` GUC from it and the RLS policy casts it to `::uuid` — a slug would error. No EP-1 story exercises `withTenant` against a real DB (services are stubbed in tests), so it's latent. Before EP-2 (stakeholder registry) reads/writes real rows, resolve the tenant UUID at session time and store it in `TenantContext` (keep slug for the dedicated-instance guard / header fallback). Audit writes have the same slug→uuid need (currently resolved via `findTenantIdBySlug`). |
 
 ---
 

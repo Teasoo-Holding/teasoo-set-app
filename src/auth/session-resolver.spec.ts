@@ -22,11 +22,17 @@ class FakeTenants implements TenantDirectory {
   async findTenantSlugByDomain(domain: string) {
     return this.map[domain] ?? null;
   }
+  async findTenantIdBySlug(slug: string) {
+    return `id-${slug}`;
+  }
 }
 class FakeUsers implements UserDirectory {
   constructor(private readonly users: Record<string, DirectoryUser>) {}
   async findUser(tenantSlug: string, email: string) {
     return this.users[`${tenantSlug}:${email}`] ?? null;
+  }
+  async findUserById(_tenantSlug: string, userId: string) {
+    return Object.values(this.users).find((u) => u.userId === userId) ?? null;
   }
 }
 class FakeAuthSettings implements AuthSettingsDirectory {
