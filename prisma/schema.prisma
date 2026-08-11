@@ -12,7 +12,12 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  // Runtime app connection — the pooled Supabase URL, as the non-superuser
+  // teasoo_app role (so RLS enforces).
   url      = env("DATABASE_URL")
+  // Migrations/introspection — the DIRECT Supabase URL as the owner role
+  // (needs DDL rights). Falls back to DATABASE_URL for a plain local Postgres.
+  directUrl = env("DIRECT_URL")
 }
 
 model Tenant {
