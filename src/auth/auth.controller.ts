@@ -39,6 +39,7 @@ export class AuthController {
       reportsToId: session.reportsToId,
       tenant: session.tenantSlug,
       sessionExpiresAt: session.sessionExpiresAt,
+      demo: session.demoMode === true,
       impersonation: session.impersonatorUserId
         ? { active: true, impersonatorUserId: session.impersonatorUserId, readOnly: session.readOnly }
         : { active: false },

@@ -1,6 +1,10 @@
 import { Global, Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { AuthController } from './auth.controller';
+import { DEMO_DIRECTORY, PrismaDemoDirectory } from './demo-directory';
+import { buildDemoSessionSigner, DemoSessionSigner } from './demo-session';
+import { DemoSessionMiddleware } from './demo-session.middleware';
+import { DemoController } from './demo.controller';
 import {
   AUTH_SETTINGS_DIRECTORY,
   AuthSettingsDirectory,
@@ -21,12 +25,14 @@ import { buildSupabaseVerifier, SupabaseTokenVerifier } from './supabase-token-v
 
 @Global()
 @Module({
-  controllers: [AuthController],
+  controllers: [AuthController, DemoController],
   providers: [
     { provide: SupabaseTokenVerifier, useFactory: () => buildSupabaseVerifier() },
     { provide: ImpersonationSigner, useFactory: () => buildImpersonationSigner() },
+    { provide: DemoSessionSigner, useFactory: () => buildDemoSessionSigner() },
     { provide: TENANT_DIRECTORY, useClass: PrismaTenantDirectory },
     { provide: USER_DIRECTORY, useClass: PrismaUserDirectory },
+    { provide: DEMO_DIRECTORY, useClass: PrismaDemoDirectory },
     { provide: AUTH_SETTINGS_DIRECTORY, useClass: PrismaAuthSettingsDirectory },
     {
       provide: SessionResolver,
@@ -40,6 +46,7 @@ import { buildSupabaseVerifier, SupabaseTokenVerifier } from './supabase-token-v
     },
     SupabaseSessionMiddleware,
     ImpersonationMiddleware,
+    DemoSessionMiddleware,
     { provide: APP_GUARD, useClass: ReadOnlyGuard },
   ],
   exports: [
@@ -48,6 +55,9 @@ import { buildSupabaseVerifier, SupabaseTokenVerifier } from './supabase-token-v
     SupabaseSessionMiddleware,
     ImpersonationMiddleware,
     ImpersonationSigner,
+    DemoSessionMiddleware,
+    DemoSessionSigner,
+    DEMO_DIRECTORY,
     USER_DIRECTORY,
   ],
 })

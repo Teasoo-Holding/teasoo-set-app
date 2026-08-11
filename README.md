@@ -125,6 +125,16 @@ always falls back to the record. Reporting line (`reports_to`) resolves the same
 way — the authoritative source per tenant (HRIS / IdP groups / manual) is a
 config choice, which is what OQ-2 was about.
 
+### Demo / sandbox mode (EP1-S7 / AUTH-3)
+
+A tenant is `production` or `sandbox`. The persona role-switcher
+([`DemoController`](src/auth/demo.controller.ts)) — `GET /auth/demo/personas`,
+`POST /auth/demo/switch` — works **only for sandbox tenants**; for a production
+tenant every route 404s, so the switcher can never operate on production data.
+A switch mints a demo-session token; [`DemoSessionMiddleware`](src/auth/demo-session.middleware.ts)
+turns it into a watermarked session (an `X-Teasoo-Demo: true` response header and
+`demo: true` on `/auth/me`).
+
 ### Impersonation — "view as" (EP1-S9 / AUTH-5)
 
 A Tenant Admin starts impersonation via `POST /auth/impersonate` (permission-gated

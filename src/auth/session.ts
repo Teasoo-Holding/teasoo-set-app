@@ -15,6 +15,8 @@ export interface AppSession {
   impersonatorUserId?: string;
   /** Impersonation sessions are read-only. */
   readOnly?: boolean;
+  /** Set for a sandbox demo session (AUTH-3), so the UI can watermark it. */
+  demoMode?: boolean;
 }
 
 const SESSION_KEY = Symbol('app.session');

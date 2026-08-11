@@ -25,6 +25,12 @@ Newest decisions go at the **top** of the "Decisions" list. Open questions live 
 
 ## Decisions
 
+### D-0017 — Demo mode is a sandbox-only, watermarked persona switcher
+**What we decided (AUTH-3):** A tenant has a `kind` (`production` | `sandbox`). The persona role-switcher (`/auth/demo/*`) is unauthenticated (it *is* the demo sign-in) but structurally gated: every route 404s unless the named tenant is a sandbox, so it can never run against a production tenant. A switch mints a demo-session token (signed with `DEMO_SESSION_SECRET`); `DemoSessionMiddleware` re-checks the tenant is a sandbox and establishes a watermarked session (`X-Teasoo-Demo` header, `demo: true` on `/auth/me`).
+**Why:** AUTH-3 requires the prototype's role-switcher to be "structurally incapable" of touching production — a `kind` check at both mint and verify makes that a property of the code, not a deployment convention. Tenant isolation (TEN-1) already keeps sandbox data separate; the switcher gate is the missing control. Returning 404 (not 403) keeps a production tenant indistinguishable from a missing one.
+**Deferred:** periodic reset/ephemerality of sandbox data (an ops/GOV concern), and seeding the demo personas (tenant onboarding, EP-13).
+**Status:** ✅ Active. 3 signer unit tests + e2e (sandbox lists/switches + watermark; production tenant 404 on both list and switch).
+
 ### D-0016 — Impersonation via a signed, audited, read-only grant
 **What we decided (AUTH-5):** A Tenant Admin starts "view as" through `POST /auth/impersonate` (permission-gated on `IMPERSONATE`, audited via the EP1-S12 log). It returns a short-lived grant (JWT signed with `IMPERSONATION_SECRET`, bound to both the acting admin and the tenant). The client sends the grant back via the `x-impersonation-grant` header; `ImpersonationMiddleware` verifies it against the real admin session and swaps in a **read-only** session for the target, tagged with the impersonator. A global `ReadOnlyGuard` blocks mutating methods; `/auth/me` exposes the impersonation banner state.
 **Why:** Making impersonation flow through a signed grant means it cannot happen without the permission-gated, audited start — there is no way to forge "act as" from a header alone. Read-only is enforced centrally rather than per-endpoint. This is the first real writer to the audit log skeleton, closing that loop.

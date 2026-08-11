@@ -19,6 +19,9 @@ model Tenant {
   id            String               @id @default(uuid()) @db.Uuid
   slug          String               @unique
   name          String
+  /// 'production' | 'sandbox'. Sandbox tenants power demo/training (AUTH-3) and
+  /// are the only ones where the persona role-switcher works.
+  kind          String               @default("production")
   createdAt     DateTime             @default(now()) @map("created_at")
   stakeholders  Stakeholder[]
   encryptionKey TenantEncryptionKey?

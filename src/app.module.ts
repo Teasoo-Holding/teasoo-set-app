@@ -1,6 +1,7 @@
 import { MiddlewareConsumer, Module, NestModule, RequestMethod } from '@nestjs/common';
 import { AuditModule } from './audit/audit.module';
 import { AuthModule } from './auth/auth.module';
+import { DemoSessionMiddleware } from './auth/demo-session.middleware';
 import { ImpersonationMiddleware } from './auth/impersonation.middleware';
 import { SupabaseSessionMiddleware } from './auth/supabase-session.middleware';
 import { AuthzModule } from './authz/authz.module';
@@ -30,7 +31,7 @@ export class AppModule implements NestModule {
     // platform/health endpoints. This attaches the verified session for the
     // tenant/principal middlewares and the /auth endpoints to read.
     consumer
-      .apply(SupabaseSessionMiddleware, ImpersonationMiddleware)
+      .apply(DemoSessionMiddleware, SupabaseSessionMiddleware, ImpersonationMiddleware)
       .exclude(
         { path: 'platform/(.*)', method: RequestMethod.ALL },
         { path: 'health', method: RequestMethod.ALL },
