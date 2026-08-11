@@ -25,6 +25,11 @@ Newest decisions go at the **top** of the "Decisions" list. Open questions live 
 
 ## Decisions
 
+### D-0018 — Escalation visibility: Leadership + Function Lead see it simultaneously
+**What we decided (§4.1):** A pure visibility policy (`visibleEscalationScope` / `canViewEscalation`) defines who sees which escalations: Leadership and Admin see ALL functions org-wide; a Function Lead sees only their own function; Field users see none. Because Leadership resolves to `all` independently of the Function Lead's function scope, both see a given escalation at the same time — it never queues behind the Head.
+**Why:** Escalations as a model are EP-6, but the visibility rule is the load-bearing guarantee ("Leadership is never surprised because a Head sat on something"), so it is defined and tested now as the policy EP-6's board query will apply — mirroring how the audit skeleton anchors later governance work.
+**Status:** ✅ Active. 8 unit tests covering the simultaneity, function scoping, and field exclusion.
+
 ### D-0017 — Demo mode is a sandbox-only, watermarked persona switcher
 **What we decided (AUTH-3):** A tenant has a `kind` (`production` | `sandbox`). The persona role-switcher (`/auth/demo/*`) is unauthenticated (it *is* the demo sign-in) but structurally gated: every route 404s unless the named tenant is a sandbox, so it can never run against a production tenant. A switch mints a demo-session token (signed with `DEMO_SESSION_SECRET`); `DemoSessionMiddleware` re-checks the tenant is a sandbox and establishes a watermarked session (`X-Teasoo-Demo` header, `demo: true` on `/auth/me`).
 **Why:** AUTH-3 requires the prototype's role-switcher to be "structurally incapable" of touching production — a `kind` check at both mint and verify makes that a property of the code, not a deployment convention. Tenant isolation (TEN-1) already keeps sandbox data separate; the switcher gate is the missing control. Returning 404 (not 403) keeps a production tenant indistinguishable from a missing one.
