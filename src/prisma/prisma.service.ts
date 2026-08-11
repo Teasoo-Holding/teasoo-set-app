@@ -27,7 +27,16 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
   readonly client: ExtendedClient = buildClient();
 
   async onModuleInit(): Promise<void> {
-    await this.client.$connect();
+    // Non-fatal: let the app boot even if the database is unreachable (e.g. in
+    // local dev before Supabase is configured). DB-backed routes will error
+    // until a connection is available; /health and demo/non-DB paths still work.
+    try {
+      await this.client.$connect();
+    } catch (err) {
+      console.warn(
+        `PrismaService: could not connect to the database at startup — continuing. ${(err as Error).message}`,
+      );
+    }
   }
 
   async onModuleDestroy(): Promise<void> {
